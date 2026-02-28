@@ -1,0 +1,16 @@
+# Environment files — contain local secrets, never commit to git
+.env
+.env.local
+.env.production
+
+# WordPress uploads (ephemeral on Railway — use S3/R2 instead)
+wp-content/uploads/
+
+# OS & editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
