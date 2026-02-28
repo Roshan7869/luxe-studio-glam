@@ -26,7 +26,7 @@ class GlamLux_Activator
 	 */
 	public static function run_db_migrations(): void
 	{
-		$db_version = (int)get_option('glamlux_db_version', 0);
+		$db_version = (int)get_option('glamlux_migration_version', 0);
 		$target_version = 5;
 
 		if ($db_version >= $target_version) {
@@ -66,7 +66,7 @@ class GlamLux_Activator
 			KEY status (status)
 		) $charset_collate;");
 
-		update_option('glamlux_db_version', $target_version);
+		update_option('glamlux_migration_version', $target_version);
 	}
 
 	/**
@@ -176,6 +176,7 @@ class GlamLux_Activator
 			name varchar(150) NOT NULL,
 			address varchar(255) NOT NULL,
 			is_active tinyint(1) DEFAULT 1 NOT NULL,
+			interior_image_url varchar(255) DEFAULT NULL,
 			created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
 			PRIMARY KEY  (id),
 			KEY franchise_id (franchise_id)
@@ -188,6 +189,8 @@ class GlamLux_Activator
 			salon_id bigint(20) NOT NULL,
 			commission_rate decimal(5,2) DEFAULT '0.00' NOT NULL,
 			specializations text,
+			job_role varchar(120) DEFAULT NULL,
+			profile_image_url varchar(255) DEFAULT NULL,
 			is_active tinyint(1) DEFAULT 1 NOT NULL,
 			PRIMARY KEY  (id),
 			KEY salon_id (salon_id),
@@ -202,6 +205,7 @@ class GlamLux_Activator
 			price decimal(10,2) NOT NULL,
 			duration_months int(11) DEFAULT 1 NOT NULL,
 			benefits text,
+			banner_image_url varchar(255) DEFAULT NULL,
 			PRIMARY KEY  (id)
 		) $charset_collate;";
 
@@ -254,6 +258,8 @@ class GlamLux_Activator
 			salon_id bigint(20) NOT NULL,
 			client_id bigint(20) DEFAULT NULL,
 			wc_order_id bigint(20) NOT NULL,
+			product_name varchar(255) DEFAULT NULL,
+			product_image_url varchar(255) DEFAULT NULL,
 			total_amount decimal(10,2) NOT NULL,
 			sale_date datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
 			PRIMARY KEY  (id),
@@ -280,6 +286,7 @@ class GlamLux_Activator
 			total_revenue decimal(12,2) DEFAULT '0.00' NOT NULL,
 			total_expenses decimal(12,2) DEFAULT '0.00' NOT NULL,
 			net_profit decimal(12,2) DEFAULT '0.00' NOT NULL,
+			report_chart_image_url varchar(255) DEFAULT NULL,
 			generated_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
 			PRIMARY KEY  (id),
 			KEY report_month (report_month)
@@ -294,6 +301,7 @@ class GlamLux_Activator
 			custom_price decimal(10,2) DEFAULT NULL,
 			duration_minutes int(11) DEFAULT 60,
 			description text DEFAULT NULL,
+			image_url varchar(255) DEFAULT NULL,
 			is_active tinyint(1) DEFAULT 1 NOT NULL,
 			service_id bigint(20) DEFAULT NULL,
 			franchise_id bigint(20) DEFAULT NULL,
@@ -325,6 +333,7 @@ class GlamLux_Activator
 			state varchar(100) DEFAULT NULL,
 			interest_type varchar(80) DEFAULT 'franchise' NOT NULL,
 			message text,
+			avatar_url varchar(255) DEFAULT NULL,
 			status varchar(50) DEFAULT 'new' NOT NULL,
 			assigned_to bigint(20) DEFAULT NULL,
 			source varchar(80) DEFAULT 'website' NOT NULL,
