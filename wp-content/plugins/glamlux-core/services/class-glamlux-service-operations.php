@@ -9,6 +9,13 @@
 class GlamLux_Service_Operations
 {
 
+	private $repo;
+
+	public function __construct(GlamLux_Repo_Operations $repo = null)
+	{
+		$this->repo = $repo ?: new GlamLux_Repo_Operations();
+	}
+
 	/**
 	 * Build a unified operations summary for enterprise monitoring.
 	 *
@@ -21,8 +28,6 @@ class GlamLux_Service_Operations
 		if (false !== $cached && is_array($cached)) {
 			return $cached;
 		}
-
-		global $wpdb;
 
 		$required_tables = array(
 			'gl_franchises',
@@ -40,47 +45,14 @@ class GlamLux_Service_Operations
 			'gl_financial_reports',
 		);
 
-		$missing_tables = array();
-		foreach ($required_tables as $table) {
-			$exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->prefix . $table));
-			if ($exists !== $wpdb->prefix . $table) {
-				$missing_tables[] = $table;
-			}
-		}
+		$missing_tables = $this->repo->get_missing_tables($required_tables);
 
-		$appointments_today = (int)$wpdb->get_var(
-			"SELECT COUNT(id) FROM {$wpdb->prefix}gl_appointments WHERE DATE(appointment_time) = CURDATE()"
-		);
-
-		$pending_appointments = (int)$wpdb->get_var(
-			"SELECT COUNT(id) FROM {$wpdb->prefix}gl_appointments WHERE status IN ('pending', 'scheduled')"
-		);
-
-		$active_memberships = (int)$wpdb->get_var(
-			"SELECT COUNT(id) FROM {$wpdb->prefix}gl_clients WHERE membership_id IS NOT NULL AND membership_expiry IS NOT NULL AND membership_expiry > NOW()"
-		);
-
-		$active_staff = (int)$wpdb->get_var(
-			"SELECT COUNT(id) FROM {$wpdb->prefix}gl_staff WHERE is_active=1"
-		);
-
-		$open_leads = 0;
-		if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->prefix . 'gl_leads')) === $wpdb->prefix . 'gl_leads') {
-			$open_leads = (int)$wpdb->get_var(
-				"SELECT COUNT(id) FROM {$wpdb->prefix}gl_leads WHERE status IN ('new','open','follow_up')"
-			);
-		}
-
-		$service_errors = 0;
-		if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->prefix . 'gl_service_logs')) === $wpdb->prefix . 'gl_service_logs') {
-			$has_logged_at = (bool)$wpdb->get_var($wpdb->prepare("SHOW COLUMNS FROM {$wpdb->prefix}gl_service_logs LIKE %s", 'logged_at'));
-			$has_notes = (bool)$wpdb->get_var($wpdb->prepare("SHOW COLUMNS FROM {$wpdb->prefix}gl_service_logs LIKE %s", 'notes'));
-			if ($has_logged_at && $has_notes) {
-				$service_errors = (int)$wpdb->get_var(
-					"SELECT COUNT(id) FROM {$wpdb->prefix}gl_service_logs WHERE logged_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR) AND (LOWER(notes) LIKE '%error%' OR LOWER(notes) LIKE '%failed%')"
-				);
-			}
-		}
+		$appointments_today = $this->repo->get_appointments_today();
+		$pending_appointments = $this->repo->get_pending_appointments();
+		$active_memberships = $this->repo->get_active_memberships();
+		$active_staff = $this->repo->get_active_staff();
+		$open_leads = $this->repo->get_open_leads();
+		$service_errors = $this->repo->get_service_errors_24h();
 
 		$schema_health = class_exists('GlamLux_SchemaHealth') ?GlamLux_SchemaHealth::get_health_report() : array();
 		$ops_health = empty($missing_tables) && $service_errors < 10 ? 'healthy' : 'warning';

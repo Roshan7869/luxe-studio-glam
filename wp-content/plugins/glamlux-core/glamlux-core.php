@@ -111,6 +111,7 @@ function run_glamlux_core()
 	GlamLux_SchemaHealth::init();
 	GlamLux_SchemaHealth::validate_schema();
 
+	require_once GLAMLUX_PLUGIN_DIR . 'repositories/class-glamlux-repo-system-mode.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'services/system-mode/class-glamlux-system-mode.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'services/system-mode/class-glamlux-demo-middleware.php';
 	GlamLux_System_Mode::init();
@@ -157,6 +158,7 @@ function run_glamlux_core()
 	require_once GLAMLUX_PLUGIN_DIR . 'repositories/class-glamlux-repo-territory.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'repositories/class-glamlux-repo-membership.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'repositories/class-glamlux-repo-gdpr.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'repositories/class-glamlux-repo-operations.php';
 
 	// ── STEP 4: Payment Domain (Interface → Concrete Gateways → Handler) ─────
 	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-payment-interface.php';

@@ -147,16 +147,13 @@ class GlamLux_System_Mode
 
     private static function log_audit(string $old_mode, string $new_mode): void
     {
-        global $wpdb;
-        $table = $wpdb->prefix . 'gl_mode_audit';
-        if ($wpdb->get_var("SHOW TABLES LIKE '{$table}'") === $table) {
-            $wpdb->insert($table, [
-                'user_id' => get_current_user_id(),
-                'previous_mode' => $old_mode,
-                'new_mode' => $new_mode,
-                'ip_address' => sanitize_text_field($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1'),
-                'created_at' => current_time('mysql'),
-            ]);
+        if (class_exists('GlamLux_Repo_System_Mode')) {
+            GlamLux_Repo_System_Mode::log_audit(
+                get_current_user_id(),
+                $old_mode,
+                $new_mode,
+                sanitize_text_field($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1')
+            );
         }
     }
 }

@@ -49,28 +49,13 @@ class GlamLux_Service_Revenue
 	 */
 	public function get_period_summary(string $date_from, string $date_to): array
 	{
-		global $wpdb;
-		// Cache key tied to date range — avoids repeated full-table reads
 		$cache_key = 'gl_period_summary_' . md5($date_from . $date_to);
 		$cached = get_transient($cache_key);
 		if ($cached !== false) {
 			return $cached;
 		}
 
-		$result = $wpdb->get_row(
-			$wpdb->prepare(
-			"SELECT
-					COALESCE(SUM(amount), 0)      AS total_revenue,
-					COUNT(id)                      AS booking_count,
-					COALESCE(AVG(amount), 0)       AS avg_booking_value
-				 FROM {$wpdb->prefix}gl_appointments
-				 WHERE status = 'completed'
-				 AND DATE(appointment_time) BETWEEN %s AND %s",
-			$date_from,
-			$date_to
-		),
-			ARRAY_A
-		) ?: ['total_revenue' => 0, 'booking_count' => 0, 'avg_booking_value' => 0];
+		$result = $this->repo->get_period_summary($date_from, $date_to);
 
 		set_transient($cache_key, $result, 5 * MINUTE_IN_SECONDS);
 		return $result;
@@ -86,29 +71,13 @@ class GlamLux_Service_Revenue
 	 */
 	public function get_monthly_trend(int $months = 6): array
 	{
-		global $wpdb;
 		$cache_key = 'gl_monthly_trend_' . $months;
 		$cached = get_transient($cache_key);
 		if ($cached !== false) {
 			return $cached;
 		}
 
-		$result = $wpdb->get_results(
-			$wpdb->prepare(
-			"SELECT
-					YEAR(appointment_time)  AS year,
-					MONTH(appointment_time) AS month,
-					COALESCE(SUM(amount), 0) AS total_revenue,
-					COUNT(id)                AS booking_count
-				 FROM {$wpdb->prefix}gl_appointments
-				 WHERE status = 'completed'
-				 AND appointment_time >= DATE_SUB(NOW(), INTERVAL %d MONTH)
-				 GROUP BY YEAR(appointment_time), MONTH(appointment_time)
-				 ORDER BY year ASC, month ASC",
-			absint($months)
-		),
-			ARRAY_A
-		) ?: [];
+		$result = $this->repo->get_monthly_trend($months);
 
 		set_transient($cache_key, $result, 5 * MINUTE_IN_SECONDS);
 		return $result;
@@ -128,29 +97,13 @@ class GlamLux_Service_Revenue
 	 */
 	public function get_revenue_by_salon(string $date_from, string $date_to): array
 	{
-		global $wpdb;
 		$cache_key = 'gl_rev_by_salon_' . md5($date_from . $date_to);
 		$cached = get_transient($cache_key);
 		if ($cached !== false) {
 			return $cached;
 		}
 
-		$result = $wpdb->get_results(
-			$wpdb->prepare(
-			"SELECT a.salon_id,
-					sl.name AS salon_name,
-					COUNT(a.id)              AS bookings,
-					COALESCE(SUM(a.amount), 0) AS revenue
-				 FROM {$wpdb->prefix}gl_appointments a
-				 LEFT JOIN {$wpdb->prefix}gl_salons sl ON a.salon_id = sl.id
-				 WHERE a.status = 'completed'
-				   AND DATE(a.appointment_time) BETWEEN %s AND %s
-				 GROUP BY a.salon_id, sl.name
-				 ORDER BY revenue DESC",
-			$date_from, $date_to
-		),
-			ARRAY_A
-		) ?: [];
+		$result = $this->repo->get_revenue_by_salon($date_from, $date_to);
 
 		set_transient($cache_key, $result, 5 * MINUTE_IN_SECONDS);
 		return $result;
