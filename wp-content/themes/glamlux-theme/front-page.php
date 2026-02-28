@@ -20,9 +20,19 @@ $site_name = get_bloginfo('name');
 $services_raw = get_transient('glamlux_fp_services');
 if (false === $services_raw) {
     $response = wp_remote_get(home_url('/wp-json/glamlux/v1/services'), ['timeout' => 3]);
-    $services_raw = (!is_wp_error($response)) ? json_decode(wp_remote_retrieve_body($response), true) : [];
-    if (!is_array($services_raw))
+
+    if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
+        $body = wp_remote_retrieve_body($response);
+        $services_raw = json_decode($body, true);
+    }
+    else {
         $services_raw = [];
+    }
+
+    if (!is_array($services_raw)) {
+        $services_raw = [];
+    }
+
     set_transient('glamlux_fp_services', $services_raw, 60);
 }
 

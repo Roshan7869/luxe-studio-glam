@@ -42,17 +42,27 @@ class GlamLux_REST_Manager
 			return $result;
 		if (current_user_can('manage_options'))
 			return $result;
+
 		$ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+
+		// Whitelist server-side self-requests (PHP template -> REST API on loopback)
+		if (in_array($ip, ['127.0.0.1', '::1', '::ffff:127.0.0.1'], true))
+			return $result;
+
 		$transient_key = 'glamlux_rl_' . md5($ip);
+		$window = 60; // seconds
+		$max_requests = 60;
+
 		$data = get_transient($transient_key);
 		if (false === $data) {
-			set_transient($transient_key, ['count' => 1, 'start' => time()], 10);
+			set_transient($transient_key, ['count' => 1, 'start' => time()], $window);
 			return $result;
 		}
-		if ($data['count'] >= 5)
-			return new WP_Error('rate_limit', 'Too many requests.', ['status' => 429]);
+		if ($data['count'] >= $max_requests)
+			return new WP_Error('rate_limit', 'Too many requests. Please try again in a minute.', ['status' => 429]);
+
 		$data['count']++;
-		set_transient($transient_key, $data, max(1, 10 - (time() - $data['start'])));
+		set_transient($transient_key, $data, max(1, $window - (time() - $data['start'])));
 		return $result;
 	}
 }

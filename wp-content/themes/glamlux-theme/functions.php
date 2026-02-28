@@ -8,7 +8,26 @@
  * - Tailwind CDN enqueue (development only)
  */
 
-if (!function_exists('glamlux_theme_setup')):
+// ─── Section Header Helper ──────────────────────────────────────────────────
+
+if (!function_exists('glamlux_section_header')) {
+	function glamlux_section_header(string $eyebrow, string $title, string $subtitle = ''): string
+	{
+		$out = '<div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;justify-content:center;">';
+		$out .= '<div style="flex:1;max-width:80px;height:1px;background:linear-gradient(90deg,transparent,rgba(198,167,94,0.5));"></div>';
+		$out .= '<span style="font-size:0.625rem;font-weight:600;letter-spacing:0.14em;color:#C6A75E;text-transform:uppercase;">' . esc_html($eyebrow) . '</span>';
+		$out .= '<div style="flex:1;max-width:80px;height:1px;background:linear-gradient(90deg,rgba(198,167,94,0.5),transparent);"></div>';
+		$out .= '</div>';
+		$out .= '<h2 style="font-family:\'Playfair Display\',serif;font-size:clamp(2rem,3.5vw,3rem);font-weight:700;color:#121212;letter-spacing:-0.02em;margin-bottom:16px;">' . esc_html($title) . '</h2>';
+		if ($subtitle) {
+			$out .= '<p style="font-size:1rem;color:#6A6A6A;max-width:480px;margin:0 auto;">' . esc_html($subtitle) . '</p>';
+		}
+		return $out;
+	}
+}
+
+
+if (!function_exists('glamlux_theme_setup')) {
 	function glamlux_theme_setup()
 	{
 		add_theme_support('automatic-feed-links');
@@ -23,16 +42,28 @@ if (!function_exists('glamlux_theme_setup')):
 			'footer_franchise' => 'Footer - Franchise',
 		));
 
-		// WooCommerce integrations
-		add_theme_support('woocommerce');
-		add_theme_support('wc-product-gallery-zoom');
-		add_theme_support('wc-product-gallery-lightbox');
-		add_theme_support('wc-product-gallery-slider');
+	// WooCommerce integrations (Commented out because plugin is not active)
+	// add_theme_support('woocommerce');
+	// add_theme_support('wc-product-gallery-zoom');
+	// add_theme_support('wc-product-gallery-lightbox');
+	// add_theme_support('wc-product-gallery-slider');
 	}
-endif;
+}
 add_action('after_setup_theme', 'glamlux_theme_setup');
 
+
+// ─── Page Template Registration ─────────────────────────────────────────────
+
+add_filter('theme_page_templates', function ($templates) {
+	$templates['page-salons.php'] = 'Salons Directory';
+	$templates['page-team.php'] = 'Our Team';
+	$templates['page-membership.php'] = 'Membership Plans';
+	$templates['page-portfolio.php'] = 'Portfolio Gallery';
+	return $templates;
+});
+
 // ─── Asset Enqueueing ────────────────────────────────────────────────────────
+
 
 function glamlux_enqueue_scripts()
 {
@@ -176,7 +207,8 @@ add_filter('widget_text', 'glamlux_lazy_load_content_images');
 // ─── SEO: Document Title Separator ──────────────────────────────────────────
 
 add_filter('document_title_separator', function () {
-	return '·'; });
+	return '·';
+});
 
 // ─── Security: Remove WP version from head ───────────────────────────────────
 
