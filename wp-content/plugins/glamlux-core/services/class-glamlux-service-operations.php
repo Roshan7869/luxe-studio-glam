@@ -56,21 +56,9 @@ class GlamLux_Service_Operations
 			"SELECT COUNT(id) FROM {$wpdb->prefix}gl_appointments WHERE status IN ('pending', 'scheduled')"
 		);
 
-		$membership_table   = $wpdb->prefix . 'gl_memberships';
-		$membership_columns = $wpdb->get_col( "SHOW COLUMNS FROM {$membership_table}", 0 );
-		if ( in_array( 'status', $membership_columns, true ) ) {
-			$active_memberships = (int)$wpdb->get_var(
-				"SELECT COUNT(id) FROM {$membership_table} WHERE status='active'"
-			);
-		} elseif ( in_array( 'is_active', $membership_columns, true ) ) {
-			$active_memberships = (int)$wpdb->get_var(
-				"SELECT COUNT(id) FROM {$membership_table} WHERE is_active=1"
-			);
-		} else {
-			$active_memberships = (int)$wpdb->get_var(
-				"SELECT COUNT(id) FROM {$membership_table}"
-			);
-		}
+		$active_memberships = (int)$wpdb->get_var(
+			"SELECT COUNT(id) FROM {$wpdb->prefix}gl_clients WHERE membership_id IS NOT NULL AND membership_expiry IS NOT NULL AND membership_expiry > NOW()"
+		);
 
 		$active_staff = (int)$wpdb->get_var(
 			"SELECT COUNT(id) FROM {$wpdb->prefix}gl_staff WHERE is_active=1"
@@ -94,7 +82,7 @@ class GlamLux_Service_Operations
 			}
 		}
 
-		$schema_health = class_exists('GlamLux_SchemaHealth') ? GlamLux_SchemaHealth::get_health_report() : array();
+		$schema_health = class_exists('GlamLux_SchemaHealth') ?GlamLux_SchemaHealth::get_health_report() : array();
 		$ops_health = empty($missing_tables) && $service_errors < 10 ? 'healthy' : 'warning';
 		if (!empty($schema_health) && isset($schema_health['status']) && 'healthy' !== $schema_health['status']) {
 			$ops_health = 'warning';
