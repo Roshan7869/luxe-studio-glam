@@ -193,6 +193,7 @@ function run_glamlux_core()
 	require_once GLAMLUX_PLUGIN_DIR . 'admin/modules/class-glamlux-appointments.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'admin/modules/class-glamlux-reporting.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'admin/modules/class-glamlux-franchises.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'admin/modules/class-glamlux-franchise-leads.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'admin/modules/class-glamlux-services-admin.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'admin/modules/class-glamlux-payroll.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'admin/modules/class-glamlux-salons.php';

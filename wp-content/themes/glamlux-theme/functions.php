@@ -59,6 +59,7 @@ add_filter('theme_page_templates', function ($templates) {
 	$templates['page-team.php'] = 'Our Team';
 	$templates['page-membership.php'] = 'Membership Plans';
 	$templates['page-portfolio.php'] = 'Portfolio Gallery';
+	$templates['page-franchise-apply.php'] = 'Franchise Apply';
 	return $templates;
 });
 

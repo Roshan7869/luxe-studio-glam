@@ -16,6 +16,9 @@ class GlamLux_Admin
 
 		// Map standard users to our custom roles
 		add_action('user_register', array($this, 'map_default_role'));
+
+		// AJAX: lead status update from the Franchise Applications admin page
+		add_action('wp_ajax_glamlux_update_lead_status', array($this, 'ajax_update_lead_status'));
 	}
 
 	/**
@@ -35,6 +38,7 @@ class GlamLux_Admin
 			3
 		);
 		add_submenu_page('glamlux-dashboard', 'Manage Franchises', 'Franchises', 'manage_glamlux_platform', 'glamlux-franchises', array($this, 'display_franchises'));
+		add_submenu_page('glamlux-dashboard', 'Franchise Applications', '🤝 Franchise Leads', 'manage_glamlux_platform', 'glamlux-franchise-leads', array($this, 'display_franchise_leads'));
 		add_submenu_page('glamlux-dashboard', 'Global Reporting', 'Reporting', 'manage_glamlux_platform', 'glamlux-reporting', array($this, 'display_reporting'));
 		add_submenu_page('glamlux-dashboard', 'Services & Pricing', 'Services', 'manage_glamlux_platform', 'glamlux-services', array($this, 'display_services'));
 		add_submenu_page('glamlux-dashboard', 'Salons', 'All Salons', 'manage_glamlux_platform', 'glamlux-salons', array($this, 'display_salons'));
@@ -127,6 +131,31 @@ class GlamLux_Admin
 		global $glamlux_franchises_instance;
 		$franchises = new GlamLux_Franchises();
 		$franchises->render_admin_page();
+	}
+
+	public function display_franchise_leads()
+	{
+		$mod = new GlamLux_Franchise_Leads();
+		$mod->render_admin_page();
+	}
+
+	public function ajax_update_lead_status()
+	{
+		check_ajax_referer('glamlux_lead_status', '_wpnonce');
+		if (!current_user_can('manage_options') && !current_user_can('manage_glamlux_platform')) {
+			wp_send_json_error('Permission denied.', 403);
+		}
+		$lead_id = intval($_POST['lead_id'] ?? 0);
+		$status = sanitize_text_field($_POST['status'] ?? '');
+		if (!$lead_id || !$status) {
+			wp_send_json_error('Invalid parameters.', 400);
+		}
+		$service = new GlamLux_Service_Lead();
+		$result = $service->update_status($lead_id, $status);
+		if (is_wp_error($result)) {
+			wp_send_json_error($result->get_error_message());
+		}
+		wp_send_json_success(['status' => $status]);
 	}
 
 	public function display_reporting()
