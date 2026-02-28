@@ -13,7 +13,17 @@ class GlamLux_SchemaHealth
 	 */
 	public static function init()
 	{
-		add_action('plugins_loaded', array(__CLASS__, 'validate_schema'), 40);
+		add_action('plugins_loaded', array(__CLASS__, 'run_validation'), 40);
+	}
+
+	/**
+	 * WordPress Action Hook callback. Must return void.
+	 *
+	 * @return void
+	 */
+	public static function run_validation()
+	{
+		self::validate_schema();
 	}
 
 	/**
