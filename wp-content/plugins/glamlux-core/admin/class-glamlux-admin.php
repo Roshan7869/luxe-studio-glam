@@ -75,8 +75,9 @@ class GlamLux_Admin
 	// ==============================================
 	public function display_dashboard()
 	{
-		global $glamlux_reporting;
+		global $glamlux_reporting, $glamlux_operations_service;
 		$kpi = is_object($glamlux_reporting) ? $glamlux_reporting->get_kpi_summary() : array();
+		$operations = is_object($glamlux_operations_service) ? $glamlux_operations_service->get_operations_summary() : array();
 		echo '<div class="wrap">';
 		echo '<h1>' . esc_html__('GlamLux2Lux — Super Admin Dashboard', 'glamlux-core') . '</h1>';
 		echo '<hr class="wp-header-end">';
@@ -93,7 +94,31 @@ class GlamLux_Admin
 			}
 			echo '</div>';
 		}
+
+		if (!empty($operations) && !empty($operations['operations'])) {
+			$health = isset($operations['health']) ? $operations['health'] : 'unknown';
+			$health_color = 'healthy' === $health ? '#2E7D32' : '#F57C00';
+			echo '<h2 style="margin-top:28px;">' . esc_html__('Enterprise Operations Health', 'glamlux-core') . '</h2>';
+			printf('<p><strong>%s:</strong> <span style="color:%s;">%s</span></p>', esc_html__('Platform Status', 'glamlux-core'), esc_attr($health_color), esc_html(ucfirst($health)));
+			echo '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:16px 0 24px;">';
+			foreach (array(
+			['Appointments Today', number_format((int)$operations['operations']['appointments_today']), '#1565C0'],
+			['Pending Queue', number_format((int)$operations['operations']['pending_appointments']), '#6A1B9A'],
+			['Active Staff', number_format((int)$operations['operations']['active_staff']), '#00897B'],
+			['Active Memberships', number_format((int)$operations['operations']['active_memberships']), '#5D4037'],
+			['Open Leads', number_format((int)$operations['operations']['open_leads']), '#546E7A'],
+			['Service Errors (24h)', number_format((int)$operations['operations']['service_errors_24h']), '#C62828'],
+			) as [$label, $value, $color]) {
+				printf('<div style="background:#fff;border-left:4px solid %s;padding:14px 18px;box-shadow:0 1px 3px rgba(0,0,0,.08);border-radius:4px;"><div style="font-size:22px;font-weight:700;color:%s;">%s</div><div style="color:#555;font-size:12px;margin-top:4px;">%s</div></div>', esc_attr($color), esc_attr($color), esc_html($value), esc_html($label));
+			}
+			echo '</div>';
+
+			if (!empty($operations['database']['missing_tables'])) {
+				echo '<div class="notice notice-warning inline"><p>' . esc_html__('Missing core tables detected:', 'glamlux-core') . ' <code>' . esc_html(implode(', ', $operations['database']['missing_tables'])) . '</code></p></div>';
+			}
+		}
 		echo '<p><a href="' . esc_url(admin_url('admin.php?page=glamlux-reporting')) . '" class="button button-primary">' . esc_html__('View Full Reports →', 'glamlux-core') . '</a></p>';
+		echo '<p><code>GET /wp-json/glamlux/v1/operations/summary</code></p>';
 		echo '</div>';
 	}
 

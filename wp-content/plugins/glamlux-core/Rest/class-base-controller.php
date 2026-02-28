@@ -1,5 +1,10 @@
 <?php
 class GlamLux_Base_Controller {
+	public function require_admin() {
+		if (!is_user_logged_in()) return new WP_Error('glamlux_unauthorized', 'Authentication required.', ['status'=>401]);
+		if (current_user_can('manage_options') || current_user_can('manage_glamlux_platform') || current_user_can('manage_glamlux_franchise')) return true;
+		return new WP_Error('glamlux_forbidden', 'Admin access required.', ['status'=>403]);
+	}
 	public function require_logged_in() {
 		if (!is_user_logged_in()) return new WP_Error('glamlux_unauthorized', 'You must be logged in.', ['status'=>401]);
 		return true;

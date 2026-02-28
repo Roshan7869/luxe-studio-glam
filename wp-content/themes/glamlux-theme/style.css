@@ -66,11 +66,32 @@ Text Domain: glamlux
 }
 
 html {
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
 }
+
+/* Lenis drives smooth scrolling physics */
+html.lenis,
+html.lenis body {
+    height: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
 
 body {
     background-color: var(--gl-bg);
@@ -745,11 +766,13 @@ img {
     position: fixed;
     top: 0;
     left: 0;
+    width: 100%;
     height: 2px;
+    transform: scaleX(0);
+    transform-origin: left center;
     background: linear-gradient(90deg, var(--gl-gold), var(--gl-gold-light));
     z-index: 1001;
-    width: 0%;
-    transition: width 0.1s linear;
+    will-change: transform;
 }
 
 /* ─── 19. Divider / Ornament ───────────────────────────────────────────────── */
