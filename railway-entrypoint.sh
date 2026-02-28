@@ -6,7 +6,12 @@ PORT="${PORT:-80}"
 
 echo "==> Configuring Apache to listen on port $PORT"
 
-# Rewrite Apache ports.conf
+# Clean up any duplicate MPMs that might cause the 'More than one MPM loaded' error
+# The official image sometimes leaves mpm_event or mpm_worker enabled when we want mpm_prefork (used by PHP)
+a2dismod mpm_event mpm_worker || true
+a2enmod mpm_prefork || true
+
+# Rewrite Apache ports.conf cleanly
 cat > /etc/apache2/ports.conf <<EOF
 Listen ${PORT}
 
@@ -20,7 +25,7 @@ Listen ${PORT}
 EOF
 
 # Update VirtualHost port in 000-default.conf
-sed -i "s/<VirtualHost \*:80>/<VirtualHost *:${PORT}>/" /etc/apache2/sites-available/000-default.conf
+sed -i "s/<VirtualHost \*:.*>/<VirtualHost *:${PORT}>/" /etc/apache2/sites-available/000-default.conf
 
 echo "==> Apache configured for port $PORT"
 
