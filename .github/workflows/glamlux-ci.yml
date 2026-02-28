@@ -53,11 +53,34 @@ jobs:
         if: always()
         run: docker compose down
 
+  # ─── WP-CLI Health Gate (Required for main/staging) ──────────────────────
+  wpcli-health-gate:
+    name: WP-CLI GlamLux Health Gate
+    runs-on: ubuntu-latest
+    needs: wordpress-smoke
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start Stack
+        run: docker compose up -d --build
+      - name: Wait for WordPress
+        run: timeout 60 bash -c 'until curl -fs http://localhost:80 > /dev/null; do sleep 2; done'
+      - name: Enable debug logging for health gate
+        run: |
+          docker exec glamlux_wp wp config set WP_DEBUG true --raw --allow-root
+          docker exec glamlux_wp wp config set WP_DEBUG_LOG true --raw --allow-root
+          docker exec glamlux_wp sh -lc 'mkdir -p /var/www/html/wp-content && : > /var/www/html/wp-content/debug.log'
+      - name: Run GlamLux health check command
+        run: docker exec glamlux_wp wp glamlux health --allow-root
+      - name: Tear down
+        if: always()
+        run: docker compose down
+
+
   # ─── Lighthouse CI Performance Audit ─────────────────────────────────────
   lighthouse:
     name: Lighthouse CI Audit
     runs-on: ubuntu-latest
-    needs: wordpress-smoke
+    needs: wpcli-health-gate
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -81,7 +104,7 @@ jobs:
   k6-load-test:
     name: k6 Load Test (Stress Validation)
     runs-on: ubuntu-latest
-    needs: wordpress-smoke
+    needs: wpcli-health-gate
     steps:
       - uses: actions/checkout@v4
       - name: Install k6
