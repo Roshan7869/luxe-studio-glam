@@ -5,9 +5,6 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <?php wp_head(); ?>
 
-<!-- Scroll progress bar -->
-<div id="gl-scroll-progress"></div>
-
 <!-- Google Fonts — preconnect for LCP -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -48,12 +45,15 @@ body { background: #F7F6F2; }
 <body <?php body_class('gl-page-enter'); ?>>
 <?php wp_body_open(); ?>
 
+<!-- Scroll progress bar -->
+<div id="gl-scroll-progress"></div>
+
 <!-- ── Toast Container ── -->
 <div id="gl-toast-container"></div>
 
 <!-- ── Navigation ──────────────────────────────────────────────────────────── -->
 <nav id="site-nav" class="gl-glass" role="navigation" aria-label="Main navigation"
-     style="position:fixed;top:0;left:0;right:0;z-index:1000;height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 48px;backdrop-filter:blur(24px) saturate(160%);-webkit-backdrop-filter:blur(24px) saturate(160%);background:rgba(247,246,242,0.72);border-bottom:1px solid rgba(255,255,255,0.4);transition:all 320ms cubic-bezier(0.4,0,0.2,1);">
+     style="position:fixed;top:0;left:0;right:0;z-index:1000;height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 48px;backdrop-filter:blur(24px) saturate(160%);-webkit-backdrop-filter:blur(24px) saturate(160%);background:rgba(247,246,242,0.72);border-bottom:1px solid rgba(255,255,255,0.4);transition:background 320ms cubic-bezier(0.4,0,0.2,1),box-shadow 320ms cubic-bezier(0.4,0,0.2,1),border-color 320ms cubic-bezier(0.4,0,0.2,1);">
 
     <!-- Logo -->
     <a href="<?php echo esc_url(home_url('/')); ?>" class="gl-nav-logo" style="display:flex;align-items:center;gap:12px;text-decoration:none;">
@@ -93,7 +93,7 @@ else {
     </ul>
 
     <!-- CTA -->
-    <a href="<?php echo esc_url(home_url('/franchise/apply')); ?>"
+    <a href="<?php echo esc_url(home_url('/franchise-enquiry')); ?>"
        class="gl-btn-primary gl-btn-glow"
        style="display:inline-flex;align-items:center;gap:8px;background:#C6A75E;color:#fff;padding:12px 24px;border-radius:9999px;font-size:0.8125rem;font-weight:600;letter-spacing:0.04em;text-decoration:none;box-shadow:0 4px 16px rgba(198,167,94,0.35);transition:all 180ms ease;animation:gl-pulse-glow 4s ease-in-out infinite;"
        onmouseover="this.style.transform='translateY(-2px) scale(1.02)';this.style.boxShadow='0 8px 28px rgba(198,167,94,0.50)'"
@@ -113,24 +113,51 @@ else {
 </style>
 
 <script>
-// Scroll progress + nav state
+// Scroll progress + nav state (rAF + Lenis-aware event bridge)
 (function(){
     const bar = document.getElementById('gl-scroll-progress');
     const nav = document.getElementById('site-nav');
-    window.addEventListener('scroll', function(){
-        const pct = window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100;
-        if(bar) bar.style.width = pct + '%';
-        if(nav){
-            if(window.scrollY > 50){
+    let ticking = false;
+
+    function paint(y){
+        const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+        const pct = Math.min(100, Math.max(0, (y / max) * 100));
+
+        if (bar) {
+            bar.style.transform = 'scaleX(' + (pct / 100) + ')';
+        }
+
+        if (nav) {
+            if (y > 50) {
                 nav.style.background = 'rgba(255,255,255,0.92)';
-                nav.style.boxShadow  = '0 1px 0 rgba(0,0,0,0.06),0 2px 8px rgba(0,0,0,0.04)';
+                nav.style.boxShadow = '0 1px 0 rgba(0,0,0,0.06),0 2px 8px rgba(0,0,0,0.04)';
                 nav.style.borderBottomColor = 'rgba(0,0,0,0.06)';
             } else {
                 nav.style.background = 'rgba(247,246,242,0.72)';
-                nav.style.boxShadow  = 'none';
+                nav.style.boxShadow = 'none';
                 nav.style.borderBottomColor = 'rgba(255,255,255,0.4)';
             }
         }
-    }, {passive: true});
+    }
+
+    function schedule(y){
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(function(){
+            paint(y);
+            ticking = false;
+        });
+    }
+
+    window.addEventListener('glamlux:scroll', function(e){
+        const y = (e.detail && typeof e.detail.y === 'number') ? e.detail.y : window.scrollY;
+        schedule(y);
+    });
+
+    window.addEventListener('scroll', function(){
+        schedule(window.scrollY);
+    }, { passive: true });
+
+    paint(window.scrollY);
 })();
 </script>

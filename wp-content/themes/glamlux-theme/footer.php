@@ -90,17 +90,30 @@ endforeach; ?>
 (function() {
 'use strict';
 
-// ── 1. Lenis smooth scroll ──────────────────────────────────────────────────
+// ── 1. Lenis smooth scroll (single source of scroll truth) ─────────────────
 var lenis;
 if (typeof Lenis !== 'undefined') {
     lenis = new Lenis({
-        duration: 1.2,
-        easing: function(t){ return Math.min(1, 1.001 - Math.pow(2, -10 * t)); },
-        smooth: true,
+        duration: 1.15,
+        smoothWheel: true,
         smoothTouch: false,
+        touchMultiplier: 1.2,
     });
-    function raf(time){ lenis.raf(time); requestAnimationFrame(raf); }
+
+    function raf(time){
+        lenis.raf(time);
+        requestAnimationFrame(raf);
+    }
     requestAnimationFrame(raf);
+
+    lenis.on('scroll', function(e){
+        window.dispatchEvent(new CustomEvent('glamlux:scroll', {
+            detail: {
+                y: e && typeof e.scroll === 'number' ? e.scroll : window.scrollY,
+                progress: e && typeof e.progress === 'number' ? e.progress : 0,
+            }
+        }));
+    });
 }
 
 // ── 2. GSAP hero entrance ───────────────────────────────────────────────────
@@ -108,10 +121,6 @@ if (typeof gsap !== 'undefined') {
     if (typeof ScrollTrigger !== 'undefined') {
         gsap.registerPlugin(ScrollTrigger);
         if (lenis) {
-            ScrollTrigger.scrollerProxy(document.body, {
-                scrollTop: function(value){ return arguments.length ? lenis.scrollTo(value) : lenis.scroll; },
-                getBoundingClientRect: function(){ return {top:0,left:0,width:window.innerWidth,height:window.innerHeight}; }
-            });
             lenis.on('scroll', ScrollTrigger.update);
         }
     }
