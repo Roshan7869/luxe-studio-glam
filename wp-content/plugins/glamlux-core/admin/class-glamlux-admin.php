@@ -228,6 +228,29 @@ class GlamLux_Admin
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html(urldecode($_GET['gl_notice'])) . '</p></div>';
 		}
 
+		if (class_exists('GlamLux_SchemaHealth') && current_user_can('manage_options')) {
+			$schema_health = GlamLux_SchemaHealth::get_health_report();
+			if (!empty($schema_health) && isset($schema_health['status']) && 'healthy' !== $schema_health['status']) {
+				$missing_tables = !empty($schema_health['mismatches']['missing_tables']) ? implode(', ', $schema_health['mismatches']['missing_tables']) : 'None';
+				$missing_columns = !empty($schema_health['mismatches']['missing_columns']) ? implode(', ', array_map(function ($entry) {
+					return $entry['table'] . '.' . $entry['column'];
+				}, $schema_health['mismatches']['missing_columns'])) : 'None';
+				$missing_indexes = !empty($schema_health['mismatches']['missing_indexes']) ? implode(', ', array_map(function ($entry) {
+					return $entry['table'] . '.' . $entry['index'];
+				}, $schema_health['mismatches']['missing_indexes'])) : 'None';
+
+				echo '<div class="notice notice-error"><p><strong>GlamLux Schema Health:</strong> Dashboard-critical schema mismatches were detected.</p>';
+				echo '<p><strong>Missing tables:</strong> <code>' . esc_html($missing_tables) . '</code><br/>';
+				echo '<strong>Missing columns:</strong> <code>' . esc_html($missing_columns) . '</code><br/>';
+				echo '<strong>Missing indexes:</strong> <code>' . esc_html($missing_indexes) . '</code></p>';
+				echo '<p><strong>Remediation:</strong></p><ol>';
+				foreach ((array)$schema_health['remediation'] as $step) {
+					echo '<li>' . esc_html($step) . '</li>';
+				}
+				echo '</ol></div>';
+			}
+		}
+
 		// Razorpay config check
 		if (!get_option('glamlux_razorpay_key_id') && current_user_can('manage_options')) {
 			echo '<div class="notice notice-warning"><p><strong>GlamLux:</strong> Razorpay Key ID is not configured. <a href="' . esc_url(admin_url('admin.php?page=glamlux-settings')) . '">Configure Payment Settings →</a></p></div>';
