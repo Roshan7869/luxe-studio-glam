@@ -35,6 +35,8 @@ class GlamLux_SchemaHealth
 	 */
 	public static function validate_schema($force_refresh = false)
 	{
+		delete_transient(self::TRANSIENT_KEY);
+		delete_transient('gl_operations_summary');
 		if (!$force_refresh) {
 			$cached = get_transient(self::TRANSIENT_KEY);
 			if (false !== $cached && is_array($cached)) {
@@ -108,9 +110,9 @@ class GlamLux_SchemaHealth
 			GlamLux_Logger::error(
 				'Schema health validation detected mismatches for dashboard-critical tables.',
 				array(
-					'component' => 'schema_health',
-					'report' => $report,
-				)
+				'component' => 'schema_health',
+				'report' => $report,
+			)
 			);
 		}
 
@@ -132,7 +134,7 @@ class GlamLux_SchemaHealth
 				'indexes' => array('PRIMARY', 'salon_time'),
 			),
 			'gl_memberships' => array(
-				'columns' => array('id', 'status'),
+				'columns' => array('id', 'is_active'),
 				'indexes' => array('PRIMARY'),
 			),
 			'gl_staff' => array(
