@@ -16,8 +16,12 @@ RUN apt-get update && apt-get install -y \
 # Copy custom wp-content (themes + plugins)
 COPY wp-content /var/www/html/wp-content
 
+# Copy our Railway-optimized wp-config
+COPY wp-config-railway.php /var/www/html/wp-config.php
+
 # Set correct permissions
 RUN chown -R www-data:www-data /var/www/html/wp-content \
+    && chown www-data:www-data /var/www/html/wp-config.php \
     && chmod -R 755 /var/www/html/wp-content
 
 # Copy Railway-specific Apache port config entrypoint
