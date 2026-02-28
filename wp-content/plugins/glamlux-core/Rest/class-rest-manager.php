@@ -31,6 +31,9 @@ class GlamLux_REST_Manager
 
 		// Compliance
 		(new GlamLux_GDPR_Controller())->register_routes();
+
+		// Visual Dataset & Gallery Data
+		(new GlamLux_Data_Controller())->register_routes();
 	}
 	public function check_rate_limit($result, $server, $request)
 	{

@@ -21,7 +21,7 @@ class GlamLux_Repo_Franchise
             return $cached;
 
         $result = $wpdb->get_results(
-            "SELECT id, name, address, city, state, phone, email, is_active
+            "SELECT id, name, address, city, state, phone, email, is_active, interior_image_url, franchise_id
 			 FROM {$wpdb->prefix}gl_salons
 			 WHERE is_active = 1
 			 ORDER BY name ASC",
@@ -85,7 +85,7 @@ class GlamLux_Repo_Franchise
             return $cached;
 
         $result = $wpdb->get_results(
-            "SELECT service_id AS id, service_name AS name, base_price AS price, category, duration_minutes, is_active
+            "SELECT service_id AS id, service_name AS name, base_price AS price, category, duration_minutes, is_active, image_url, description
 			 FROM {$wpdb->prefix}gl_service_pricing
 			 WHERE is_active = 1
 			 ORDER BY category ASC, service_name ASC",

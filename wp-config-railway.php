@@ -33,14 +33,20 @@ if (!empty($_SERVER['HTTP_HOST'])) {
     define('WP_SITEURL', $proto . $_SERVER['HTTP_HOST']);
 }
 
-// Redis Object Cache
-$redis_host = getenv('REDISHOST') ?: 'redis.railway.internal';
-define('WP_CACHE', true);
-define('WP_REDIS_HOST', $redis_host);
-define('WP_REDIS_PORT', (int)(getenv('REDISPORT') ?: 6379));
-$redis_pass = getenv('REDIS_PASSWORD') ?: null;
-if ($redis_pass)
-    define('WP_REDIS_PASSWORD', $redis_pass);
+// Redis Object Cache — only enable if the drop-in actually exists (prevents crash when Redis is not yet available)
+$redis_host = getenv('REDISHOST') ?: '';
+$redis_dropin = __DIR__ . '/wp-content/object-cache.php';
+if ($redis_host && file_exists($redis_dropin)) {
+    define('WP_CACHE', true);
+    define('WP_REDIS_HOST', $redis_host);
+    define('WP_REDIS_PORT', (int)(getenv('REDISPORT') ?: 6379));
+    $redis_pass = getenv('REDIS_PASSWORD') ?: null;
+    if ($redis_pass)
+        define('WP_REDIS_PASSWORD', $redis_pass);
+}
+else {
+    define('WP_CACHE', false);
+}
 
 // Disable WP-Cron — Railway scheduled job handles this
 define('DISABLE_WP_CRON', true);

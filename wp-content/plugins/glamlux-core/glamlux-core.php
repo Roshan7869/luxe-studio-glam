@@ -121,7 +121,7 @@ function run_glamlux_core()
 	require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-cron.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-ajax.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-site-provisioner.php';
-	if ( defined('WP_CLI') && WP_CLI ) {
+	if (defined('WP_CLI') && WP_CLI) {
 		require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-cli-health.php';
 	}
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-base-controller.php';
@@ -133,6 +133,7 @@ function run_glamlux_core()
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-reports-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-operations-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-gdpr-controller.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-glamlux-data-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-rest-manager.php';
 
 	// ── STEP 2: Event Bus (load FIRST — all services depend on it) ───────────
@@ -235,3 +236,23 @@ function run_glamlux_core()
 	new GlamLux_Services_Admin();
 }
 add_action('plugins_loaded', 'run_glamlux_core', 20);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TEMP: Execute Enterprise Visual Dataset Seeder via Browser (admin-only, one-time)
+// ─────────────────────────────────────────────────────────────────────────────
+add_action('init', function () {
+	if (!isset($_GET['seed_now']) || $_GET['seed_now'] !== '1') {
+		return;
+	}
+	// Security: must be logged-in admin
+	if (!is_user_logged_in() || !current_user_can('manage_options')) {
+		wp_die('Unauthorized. You must be logged in as an administrator to seed data.', 'GlamLux Seed', ['response' => 403]);
+	}
+	// Idempotency: only seed once. Delete option to re-seed.
+	if (get_option('glamlux_enterprise_seed_v1')) {
+		wp_die('✅ Enterprise dataset was already seeded on ' . get_option('glamlux_enterprise_seed_v1') . '. To re-seed, delete the <code>glamlux_enterprise_seed_v1</code> option.');
+	}
+	require_once GLAMLUX_PLUGIN_DIR . 'scripts/seed-enterprise-visual-dataset.php';
+	update_option('glamlux_enterprise_seed_v1', gmdate('Y-m-d H:i:s'));
+	wp_die('✅ Enterprise visual dataset seeded successfully! All 69 records are now live in the database.');
+});

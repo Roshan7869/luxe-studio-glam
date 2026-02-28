@@ -113,4 +113,46 @@ class GlamLux_Service_Revenue
 		set_transient($cache_key, $result, 5 * MINUTE_IN_SECONDS);
 		return $result;
 	}
+
+	/**
+	 * Alias for get_period_summary — used by GlamLux_Reports_Controller.
+	 */
+	public function get_revenue_summary(string $date_from, string $date_to): array
+	{
+		return $this->get_period_summary($date_from, $date_to);
+	}
+
+	/**
+	 * Revenue breakdown per salon for a date range.
+	 * Delegates to GlamLux_Repo_Revenue -> GlamLux_Repo_Franchise.
+	 */
+	public function get_revenue_by_salon(string $date_from, string $date_to): array
+	{
+		global $wpdb;
+		$cache_key = 'gl_rev_by_salon_' . md5($date_from . $date_to);
+		$cached = get_transient($cache_key);
+		if ($cached !== false) {
+			return $cached;
+		}
+
+		$result = $wpdb->get_results(
+			$wpdb->prepare(
+			"SELECT a.salon_id,
+					sl.name AS salon_name,
+					COUNT(a.id)              AS bookings,
+					COALESCE(SUM(a.amount), 0) AS revenue
+				 FROM {$wpdb->prefix}gl_appointments a
+				 LEFT JOIN {$wpdb->prefix}gl_salons sl ON a.salon_id = sl.id
+				 WHERE a.status = 'completed'
+				   AND DATE(a.appointment_time) BETWEEN %s AND %s
+				 GROUP BY a.salon_id, sl.name
+				 ORDER BY revenue DESC",
+			$date_from, $date_to
+		),
+			ARRAY_A
+		) ?: [];
+
+		set_transient($cache_key, $result, 5 * MINUTE_IN_SECONDS);
+		return $result;
+	}
 }

@@ -35,8 +35,10 @@ class GlamLux_SchemaHealth
 	 */
 	public static function validate_schema($force_refresh = false)
 	{
-		delete_transient(self::TRANSIENT_KEY);
-		delete_transient('gl_operations_summary');
+		if ($force_refresh) {
+			delete_transient(self::TRANSIENT_KEY);
+			delete_transient('gl_operations_summary');
+		}
 		if (!$force_refresh) {
 			$cached = get_transient(self::TRANSIENT_KEY);
 			if (false !== $cached && is_array($cached)) {
