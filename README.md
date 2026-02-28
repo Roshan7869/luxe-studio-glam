@@ -84,6 +84,24 @@ WP_REDIS_HOST=<railway_redis_host>
 WP_REDIS_PORT=6379
 ```
 
+
+### Enterprise Demo Dataset Seeder
+
+To load the full visual + operational demo dataset (services, before/after logs, leads, memberships, salons, staff, payroll, inventory, and reports), run:
+
+```bash
+wp eval-file wp-content/plugins/glamlux-core/scripts/seed-enterprise-visual-dataset.php
+```
+
+This seeder is idempotent (uses `REPLACE`) and designed for staging/demo refresh workflows.
+
+
+For the exact **39-record visual dataset pack** (6 services, 6 logs, 6 product sales, 6 leads, 6 memberships, 3 salons, 3 staff, 3 financial reports), run:
+
+```bash
+wp eval-file wp-content/plugins/glamlux-core/scripts/seed-visual-dataset-39.php
+```
+
 ### Important Production Notes
 
 - **Storage**: Railway provides *ephemeral* storage. For persistent media uploads (`wp-content/uploads`), you **must** configure an S3 bucket or Cloudflare R2 via an offload plugin.

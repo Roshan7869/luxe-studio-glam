@@ -24,6 +24,11 @@ class GlamLux_REST_Manager
 			(new GlamLux_Reports_Controller())->register_routes();
 		}
 
+		// Operations
+		if (class_exists('GlamLux_Operations_Controller')) {
+			(new GlamLux_Operations_Controller())->register_routes();
+		}
+
 		// Compliance
 		(new GlamLux_GDPR_Controller())->register_routes();
 	}

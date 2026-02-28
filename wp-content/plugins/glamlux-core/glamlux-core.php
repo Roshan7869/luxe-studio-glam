@@ -13,7 +13,7 @@ if (!defined('WPINC')) {
 }
 
 define('GLAMLUX_VERSION', '3.0.0');
-define('GLAMLUX_DB_VERSION', '2.2.0');
+define('GLAMLUX_DB_VERSION', '2.3.0');
 define('GLAMLUX_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('GLAMLUX_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -122,6 +122,7 @@ function run_glamlux_core()
 	require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-wc-hooks.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-cron.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-ajax.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-site-provisioner.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-base-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-salon-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-service-controller.php';
@@ -129,6 +130,7 @@ function run_glamlux_core()
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-staff-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-lead-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-reports-controller.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-operations-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-gdpr-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-rest-manager.php';
 
@@ -175,6 +177,7 @@ function run_glamlux_core()
 	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-service-membership.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-service-inventory.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-service-gdpr.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-service-operations.php';
 
 	// ── STEP 6: Boot Event Listeners ─────────────────────────────────────────
 	GlamLux_Service_Commission::init(); // Legacy static listener — backward compat
@@ -198,7 +201,7 @@ function run_glamlux_core()
 
 	global $glamlux_reporting, $glamlux_payment_webhook,
 	$glamlux_leads, $glamlux_territory, $glamlux_revenue,
-	$glamlux_payroll, $glamlux_attendance;
+	$glamlux_payroll, $glamlux_attendance, $glamlux_operations_service;
 
 	// Payment: build gateway instances → inject into webhook handler
 	$razorpay_gw = new GlamLux_Payment_Razorpay();
@@ -215,6 +218,7 @@ function run_glamlux_core()
 	$glamlux_revenue = new GlamLux_Service_Revenue();
 	$glamlux_payroll = new GlamLux_Service_Payroll();
 	$glamlux_attendance = new GlamLux_Service_Attendance();
+	$glamlux_operations_service = new GlamLux_Service_Operations();
 
 	// Admin + Infrastructure
 	new GlamLux_Content_Manager(); // CPTs, Permissions, Customizer, REST content routes
@@ -223,6 +227,7 @@ function run_glamlux_core()
 	new GlamLux_WC_Hooks();
 	new GlamLux_Cron();
 	new GlamLux_AJAX();
+	new GlamLux_Site_Provisioner();
 	new GlamLux_REST_Manager();
 	new GlamLux_Appointments();
 	new GlamLux_Franchises();
