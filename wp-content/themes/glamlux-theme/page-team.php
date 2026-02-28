@@ -6,17 +6,21 @@
 get_header();
 global $wpdb;
 
-$staff_list = $wpdb->get_results(
-    "SELECT st.id, st.job_role, st.specializations, st.profile_image_url, st.is_active,
-            u.display_name AS name,
-            sl.name AS salon_name, sl.city
-       FROM {$wpdb->prefix}gl_staff st
-       LEFT JOIN {$wpdb->users} u ON st.wp_user_id = u.ID
-       LEFT JOIN {$wpdb->prefix}gl_salons sl ON st.salon_id = sl.id
-      WHERE st.is_active = 1
-      ORDER BY sl.name ASC, u.display_name ASC",
-    ARRAY_A
-) ?: [];
+$staff_list = get_transient('glamlux_page_team');
+if (false === $staff_list) {
+    $staff_list = $wpdb->get_results(
+        "SELECT st.id, st.job_role, st.specializations, st.profile_image_url, st.is_active,
+                u.display_name AS name,
+                sl.name AS salon_name, sl.city
+           FROM {$wpdb->prefix}gl_staff st
+           LEFT JOIN {$wpdb->users} u ON st.wp_user_id = u.ID
+           LEFT JOIN {$wpdb->prefix}gl_salons sl ON st.salon_id = sl.id
+          WHERE st.is_active = 1
+          ORDER BY sl.name ASC, u.display_name ASC",
+        ARRAY_A
+    ) ?: [];
+    set_transient('glamlux_page_team', $staff_list, 15 * MINUTE_IN_SECONDS);
+}
 
 // Group by salon
 $by_salon = [];

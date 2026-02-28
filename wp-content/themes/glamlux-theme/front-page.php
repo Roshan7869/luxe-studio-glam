@@ -121,11 +121,12 @@ if (false === $staff_raw) {
 
     if ($table_exists) {
         $staff_raw = $wpdb->get_results("
-            SELECT s.full_name, s.role, s.profile_image_url as image_url, l.name as salon_name
+            SELECT u.display_name AS name, s.job_role AS role, s.profile_image_url as image_url, l.name as salon_name
             FROM {$table_staff} s
+            LEFT JOIN {$wpdb->users} u ON s.wp_user_id = u.ID
             LEFT JOIN {$table_salons} l ON s.salon_id = l.id
             WHERE s.is_active = 1 
-            ORDER BY s.hired_date ASC 
+            ORDER BY s.created_at ASC 
             LIMIT 6
         ", ARRAY_A);
     }

@@ -7,15 +7,19 @@ get_header();
 global $wpdb;
 
 // Fetch all service logs with an after image
-$logs = $wpdb->get_results(
-    "SELECT l.id, l.client_name, l.before_image_url, l.after_image_url, l.notes, l.created_at,
-            s.service_name 
-       FROM {$wpdb->prefix}gl_service_logs l
-       LEFT JOIN {$wpdb->prefix}gl_service_pricing s ON l.service_id = s.id
-      WHERE l.after_image_url IS NOT NULL
-      ORDER BY l.created_at DESC",
-    ARRAY_A
-) ?: [];
+$logs = get_transient('glamlux_page_portfolio');
+if (false === $logs) {
+    $logs = $wpdb->get_results(
+        "SELECT l.id, l.client_name, l.before_image_url, l.after_image_url, l.notes, l.created_at,
+                s.service_name 
+           FROM {$wpdb->prefix}gl_service_logs l
+           LEFT JOIN {$wpdb->prefix}gl_service_pricing s ON l.service_id = s.id
+          WHERE l.after_image_url IS NOT NULL
+          ORDER BY l.created_at DESC",
+        ARRAY_A
+    ) ?: [];
+    set_transient('glamlux_page_portfolio', $logs, 15 * MINUTE_IN_SECONDS);
+}
 ?>
 
 <main style="padding-top:72px;background:#121212;color:#fff;min-height:100vh;">

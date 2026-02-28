@@ -7,13 +7,17 @@ get_header();
 global $wpdb;
 
 // Fetch active memberships
-$memberships = $wpdb->get_results(
-    "SELECT id, tier_name, price_monthly, price_yearly, benefits, banner_image_url
-       FROM {$wpdb->prefix}gl_memberships
-      WHERE is_active = 1
-      ORDER BY price_monthly ASC",
-    ARRAY_A
-) ?: [];
+$memberships = get_transient('glamlux_page_memberships');
+if (false === $memberships) {
+    $memberships = $wpdb->get_results(
+        "SELECT id, tier_name, price_monthly, price_yearly, benefits, banner_image_url
+           FROM {$wpdb->prefix}gl_memberships
+          WHERE is_active = 1
+          ORDER BY price_monthly ASC",
+        ARRAY_A
+    ) ?: [];
+    set_transient('glamlux_page_memberships', $memberships, 15 * MINUTE_IN_SECONDS);
+}
 ?>
 
 <main style="padding-top:72px;background:#F7F6F2;min-height:100vh;">

@@ -29,7 +29,7 @@ class GlamLux_Franchise_Leads
                FROM {$wpdb->prefix}gl_leads l
                LEFT JOIN {$wpdb->users} u ON l.assigned_to = u.ID
               WHERE l.interest_type = 'franchise'
-              ORDER BY l.created_at DESC",
+              ORDER BY l.created_at DESC LIMIT 150",
             ARRAY_A
         ) ?: [];
 

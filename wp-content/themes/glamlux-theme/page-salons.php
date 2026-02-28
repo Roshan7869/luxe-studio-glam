@@ -6,15 +6,19 @@
 get_header();
 global $wpdb;
 
-$salons = $wpdb->get_results(
-    "SELECT s.id, s.name, s.address, s.city, s.phone, s.email, s.interior_image_url, s.is_active,
-            COUNT(DISTINCT st.id) AS staff_count
-       FROM {$wpdb->prefix}gl_salons s
-       LEFT JOIN {$wpdb->prefix}gl_staff st ON st.salon_id = s.id AND st.is_active = 1
-      GROUP BY s.id
-      ORDER BY s.name ASC",
-    ARRAY_A
-) ?: [];
+$salons = get_transient('glamlux_page_salons');
+if (false === $salons) {
+    $salons = $wpdb->get_results(
+        "SELECT s.id, s.name, s.address, s.city, s.phone, s.email, s.interior_image_url, s.is_active,
+                COUNT(DISTINCT st.id) AS staff_count
+           FROM {$wpdb->prefix}gl_salons s
+           LEFT JOIN {$wpdb->prefix}gl_staff st ON st.salon_id = s.id AND st.is_active = 1
+          GROUP BY s.id
+          ORDER BY s.name ASC",
+        ARRAY_A
+    ) ?: [];
+    set_transient('glamlux_page_salons', $salons, 15 * MINUTE_IN_SECONDS);
+}
 ?>
 
 <main style="padding-top:72px;background:#F7F6F2;min-height:100vh;">
