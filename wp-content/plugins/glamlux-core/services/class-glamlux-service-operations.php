@@ -94,7 +94,11 @@ class GlamLux_Service_Operations
 			}
 		}
 
+		$schema_health = class_exists('GlamLux_SchemaHealth') ? GlamLux_SchemaHealth::get_health_report() : array();
 		$ops_health = empty($missing_tables) && $service_errors < 10 ? 'healthy' : 'warning';
+		if (!empty($schema_health) && isset($schema_health['status']) && 'healthy' !== $schema_health['status']) {
+			$ops_health = 'warning';
+		}
 
 		$summary = array(
 			'generated_at' => gmdate('c'),
@@ -112,6 +116,7 @@ class GlamLux_Service_Operations
 				'open_leads' => $open_leads,
 				'service_errors_24h' => $service_errors,
 			),
+			'schema_health' => $schema_health,
 		);
 
 		set_transient($cache_key, $summary, MINUTE_IN_SECONDS * 3);
