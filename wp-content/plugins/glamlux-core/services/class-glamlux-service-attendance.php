@@ -31,11 +31,21 @@ class GlamLux_Service_Attendance {
 		return true;
 	}
 	public function get_monthly_summary($staff_id, $month) {
-		$rows = $this->repo->get_monthly_attendance($staff_id, $month);
+		[$year, $month_num] = $this->parse_month_parts($month);
+		$rows = $this->repo->get_monthly_attendance($staff_id, $year, $month_num);
 		return [
 			"days" => count($rows),
 			"late_days" => count(array_filter($rows, fn($r) => !empty($r["is_late"]))),
 			"hours" => round(array_sum(array_column($rows, "hours_worked")), 2)
 		];
+	}
+
+	private function parse_month_parts($month) {
+		$month = is_string($month) ? trim($month) : '';
+		if (!preg_match('/^(\d{4})-(0[1-9]|1[0-2])$/', $month, $matches)) {
+			throw new InvalidArgumentException('Invalid month format. Expected YYYY-MM.');
+		}
+
+		return [(int)$matches[1], (int)$matches[2]];
 	}
 }
