@@ -15,7 +15,7 @@ class GlamLux_Repo_Payroll {
 	}
 	public function insert_payroll_record($data) {
 		global $wpdb;
-		$wpdb->insert($wpdb->prefix."gl_payroll", $data, ["%d","%d","%s","%s","%f","%f","%f","%s"]);
+		$wpdb->insert($wpdb->prefix."gl_payroll", $data);
 		return $wpdb->insert_id;
 	}
 	public function update_payroll_status($id, $status) {

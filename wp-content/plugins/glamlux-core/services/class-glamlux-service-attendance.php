@@ -31,7 +31,11 @@ class GlamLux_Service_Attendance {
 		return true;
 	}
 	public function get_monthly_summary($staff_id, $month) {
-		$rows = $this->repo->get_monthly_attendance($staff_id, $month);
+		$dt = \DateTime::createFromFormat("Y-m", $month);
+		if (!$dt) {
+			return ["days" => 0, "late_days" => 0, "hours" => 0.0];
+		}
+		$rows = $this->repo->get_monthly_attendance($staff_id, (int)$dt->format("Y"), (int)$dt->format("m"));
 		return [
 			"days" => count($rows),
 			"late_days" => count(array_filter($rows, fn($r) => !empty($r["is_late"]))),
