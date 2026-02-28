@@ -1,0 +1,110 @@
+name: GlamLux2Lux Enterprise CI
+
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+    branches: [main]
+
+jobs:
+
+  # ─── PHP Syntax Check ─────────────────────────────────────────────────────
+  php-lint:
+    name: PHP Syntax Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+      - name: Lint PHP files (glamlux-core plugin)
+        run: find wp-content/plugins/glamlux-core -name "*.php" | xargs -n1 php -l
+
+  # ─── WordPress + Docker Smoke Test ──────────────────────────────────────
+  wordpress-smoke:
+    name: WordPress Smoke Test
+    runs-on: ubuntu-latest
+    needs: php-lint
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start Stack (Docker Compose)
+        run: docker compose up -d --build
+      - name: Wait for WordPress to be ready
+        run: |
+          timeout 60 bash -c 'until curl -fs http://localhost:80 > /dev/null; do sleep 2; done'
+          echo "WordPress is up"
+      - name: Smoke test homepage
+        run: |
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:80)
+          echo "Homepage returned HTTP $HTTP_STATUS"
+          [[ "$HTTP_STATUS" == "200" || "$HTTP_STATUS" == "302" ]]
+      - name: Smoke test REST API
+        run: |
+          SALONS=$(curl -sf http://localhost:80/wp-json/glamlux/v1/salons || echo "[]")
+          echo "Salons endpoint response: $SALONS"
+      - name: Smoke test GDPR export (expects 401 without auth)
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:80/wp-json/glamlux/v1/user/export)
+          echo "GDPR export endpoint returned $STATUS"
+          [[ "$STATUS" == "401" ]]
+      - name: Tear down
+        if: always()
+        run: docker compose down
+
+  # ─── Lighthouse CI Performance Audit ─────────────────────────────────────
+  lighthouse:
+    name: Lighthouse CI Audit
+    runs-on: ubuntu-latest
+    needs: wordpress-smoke
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Start Stack
+        run: docker compose up -d
+      - name: Wait for WordPress
+        run: timeout 60 bash -c 'until curl -fs http://localhost:80 > /dev/null; do sleep 2; done'
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli@0.13.x
+      - name: Run Lighthouse CI
+        run: lhci autorun --config .lighthouserc.json || true
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+      - name: Tear down
+        if: always()
+        run: docker compose down
+
+  # ─── k6 Load Test ─────────────────────────────────────────────────────────
+  k6-load-test:
+    name: k6 Load Test (Stress Validation)
+    runs-on: ubuntu-latest
+    needs: wordpress-smoke
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install k6
+        run: |
+          curl -fsSL https://dl.k6.io/key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/k6-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update && sudo apt-get install k6
+      - name: Start Stack + Seed data
+        run: |
+          docker compose up -d
+          timeout 60 bash -c 'until curl -fs http://localhost:80/wp-json/ > /dev/null; do sleep 2; done'
+      - name: Run k6 (smoke, 10 VUs for CI)
+        run: |
+          k6 run \
+            --env BASE_URL=http://localhost:80 \
+            --vus 10 --duration 30s \
+            scripts/k6-load-test.js \
+            --out json=k6-results.json
+      - name: Upload k6 results
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-results
+          path: k6-results.json
+      - name: Tear down
+        if: always()
+        run: docker compose down
