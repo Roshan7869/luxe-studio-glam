@@ -31,6 +31,9 @@ docker exec glamlux_wp wp core install \
     --admin_email="admin@glamlux.com" \
     --allow-root
 
+# Activate Custom Theme
+docker exec glamlux_wp wp theme activate glamlux-theme --allow-root
+
 # Install Redis Object Cache
 docker exec glamlux_wp wp plugin install redis-cache --activate --allow-root
 docker exec glamlux_wp wp redis enable --allow-root
