@@ -1,108 +1,93 @@
 <?php
 /**
- * Custom WordPress configuration for Railway deployment.
+ * Railway-optimized WordPress configuration.
  *
- * This file dynamically reads environment variables injected by Railway
- * and configures WordPress accordingly.
+ * Uses getenv() with safe fallbacks:
+ *   Railway MySQL plugin injects: MYSQLHOST, MYSQLUSER, MYSQLPASSWORD, MYSQLDATABASE, MYSQLPORT
+ *   WordPress Docker image expects: WORDPRESS_DB_HOST, WORDPRESS_DB_USER, WORDPRESS_DB_PASSWORD, WORDPRESS_DB_NAME
+ *
+ * Both chains are supported so this works whether variables come
+ * from a linked Railway MySQL service OR from manually set env vars.
  */
 
-// ** Database settings - You can get this info from your web host ** //
-/** The name of the database for WordPress */
-define('DB_NAME', $_ENV['MYSQL_DATABASE'] ?? $_ENV['WORDPRESS_DB_NAME'] ?? 'wordpress');
-
-/** Database username */
-define('DB_USER', $_ENV['MYSQL_USER'] ?? $_ENV['WORDPRESS_DB_USER'] ?? 'root');
-
-/** Database password */
-define('DB_PASSWORD', $_ENV['MYSQL_PASSWORD'] ?? $_ENV['WORDPRESS_DB_PASSWORD'] ?? '');
-
-/** Database hostname */
-define('DB_HOST', $_ENV['MYSQLHOST'] ? $_ENV['MYSQLHOST'] . ':' . ($_ENV['MYSQLPORT'] ?? '3306') : ($_ENV['WORDPRESS_DB_HOST'] ?? 'localhost'));
-
-/** Database charset to use in creating database tables. */
+// --------------------------------------------------------------------------
+// Database configuration (Railway-safe)
+// --------------------------------------------------------------------------
+$mysql_host = getenv('MYSQLHOST') ?: getenv('WORDPRESS_DB_HOST') ?: 'localhost';
+$mysql_port = getenv('MYSQLPORT') ?: '3306';
+define('DB_HOST', $mysql_host . ':' . $mysql_port);
+define('DB_USER', getenv('MYSQLUSER') ?: getenv('WORDPRESS_DB_USER') ?: 'root');
+define('DB_PASSWORD', getenv('MYSQLPASSWORD') ?: getenv('WORDPRESS_DB_PASSWORD') ?: '');
+define('DB_NAME', getenv('MYSQLDATABASE') ?: getenv('WORDPRESS_DB_NAME') ?: 'wordpress');
 define('DB_CHARSET', 'utf8mb4');
-
-/** The database collate type. Don't change this if in doubt. */
 define('DB_COLLATE', '');
 
-/**#@+
- * Authentication unique keys and salts.
- *
- * Change these to different unique phrases! You can generate these using
- * the {@link https://api.wordpress.org/secret-key/1.1/salt/ WordPress.org secret-key service}.
- *
- * You can change these at any point in time to invalidate all existing cookies.
- * This will force all users to have to log in again.
- *
- * @since 2.6.0
- */
-define('AUTH_KEY', $_ENV['AUTH_KEY'] ?? 'put your unique phrase here');
-define('SECURE_AUTH_KEY', $_ENV['SECURE_AUTH_KEY'] ?? 'put your unique phrase here');
-define('LOGGED_IN_KEY', $_ENV['LOGGED_IN_KEY'] ?? 'put your unique phrase here');
-define('NONCE_KEY', $_ENV['NONCE_KEY'] ?? 'put your unique phrase here');
-define('AUTH_SALT', $_ENV['AUTH_SALT'] ?? 'put your unique phrase here');
-define('SECURE_AUTH_SALT', $_ENV['SECURE_AUTH_SALT'] ?? 'put your unique phrase here');
-define('LOGGED_IN_SALT', $_ENV['LOGGED_IN_SALT'] ?? 'put your unique phrase here');
-define('NONCE_SALT', $_ENV['NONCE_SALT'] ?? 'put your unique phrase here');
+// --------------------------------------------------------------------------
+// Authentication keys & salts
+// These fallbacks let the site boot even if salts aren't set yet.
+// Replace with your own keys from: https://api.wordpress.org/secret-key/1.1/salt/
+// --------------------------------------------------------------------------
+define('AUTH_KEY', getenv('AUTH_KEY') ?: 'change-me-auth-key');
+define('SECURE_AUTH_KEY', getenv('SECURE_AUTH_KEY') ?: 'change-me-secure-auth-key');
+define('LOGGED_IN_KEY', getenv('LOGGED_IN_KEY') ?: 'change-me-logged-in-key');
+define('NONCE_KEY', getenv('NONCE_KEY') ?: 'change-me-nonce-key');
+define('AUTH_SALT', getenv('AUTH_SALT') ?: 'change-me-auth-salt');
+define('SECURE_AUTH_SALT', getenv('SECURE_AUTH_SALT') ?: 'change-me-secure-auth-salt');
+define('LOGGED_IN_SALT', getenv('LOGGED_IN_SALT') ?: 'change-me-logged-in-salt');
+define('NONCE_SALT', getenv('NONCE_SALT') ?: 'change-me-nonce-salt');
 
-/**#@-*/
-
-/**
- * WordPress database table prefix.
- *
- * You can have multiple installations in one database if you give each
- * a unique prefix. Only numbers, letters, and underscores please!
- */
+// --------------------------------------------------------------------------
+// Table prefix
+// --------------------------------------------------------------------------
 $table_prefix = 'wp_';
 
-/**
- * For developers: WordPress debugging mode.
- *
- * Change this to true to enable the display of notices during development.
- * It is strongly recommended that plugin and theme developers use WP_DEBUG
- * in their development environments.
- *
- * For information on other constants that can be used for debugging,
- * visit the documentation.
- *
- * @link https://wordpress.org/support/article/debugging-in-wordpress/
- */
-define('WP_DEBUG', filter_var($_ENV['WP_DEBUG'] ?? false, FILTER_VALIDATE_BOOLEAN));
+// --------------------------------------------------------------------------
+// Debug mode
+// --------------------------------------------------------------------------
+define('WP_DEBUG', filter_var(getenv('WP_DEBUG') ?: false, FILTER_VALIDATE_BOOLEAN));
+define('WP_DEBUG_LOG', filter_var(getenv('WP_DEBUG_LOG') ?: false, FILTER_VALIDATE_BOOLEAN));
 
-/* Add any custom values between this line and the "stop editing" line. */
-
-// Force HTTPS in Railway (since Railway sits behind a proxy)
-if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+// --------------------------------------------------------------------------
+// Force HTTPS when behind Railway's proxy
+// --------------------------------------------------------------------------
+if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
     $_SERVER['HTTPS'] = 'on';
 }
 
-// Ensure the site URL is correct dynamically (Railway gives random URLs)
-if (isset($_SERVER['HTTP_HOST'])) {
+// --------------------------------------------------------------------------
+// Dynamic site URL (works for any Railway-generated subdomain or custom domain)
+// --------------------------------------------------------------------------
+if (!empty($_SERVER['HTTP_HOST'])) {
     $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https://' : 'http://';
     define('WP_HOME', $protocol . $_SERVER['HTTP_HOST']);
     define('WP_SITEURL', $protocol . $_SERVER['HTTP_HOST']);
 }
 
-// Redis Object Cache Settings
-if (isset($_ENV['REDISHOST']) || isset($_ENV['WP_REDIS_HOST'])) {
-    define('WP_REDIS_HOST', $_ENV['REDISHOST'] ?? $_ENV['WP_REDIS_HOST']);
-    define('WP_REDIS_PORT', $_ENV['REDISPORT'] ?? $_ENV['WP_REDIS_PORT'] ?? 6379);
-    if (isset($_ENV['REDISPASSWORD']) || isset($_ENV['WP_REDIS_PASSWORD'])) {
-        define('WP_REDIS_PASSWORD', $_ENV['REDISPASSWORD'] ?? $_ENV['WP_REDIS_PASSWORD']);
+// --------------------------------------------------------------------------
+// Redis Object Cache (only if Railway Redis is linked)
+// --------------------------------------------------------------------------
+$redis_host = getenv('REDISHOST') ?: getenv('WP_REDIS_HOST') ?: null;
+if ($redis_host) {
+    define('WP_CACHE', true);
+    define('WP_REDIS_HOST', $redis_host);
+    define('WP_REDIS_PORT', (int)(getenv('REDISPORT') ?: getenv('WP_REDIS_PORT') ?: 6379));
+    $redis_password = getenv('REDISPASSWORD') ?: getenv('WP_REDIS_PASSWORD') ?: null;
+    if ($redis_password) {
+        define('WP_REDIS_PASSWORD', $redis_password);
     }
 }
 
-// Disable WP Cron if specified (so Railway scheduled jobs can do it)
-if (isset($_ENV['DISABLE_WP_CRON']) && filter_var($_ENV['DISABLE_WP_CRON'], FILTER_VALIDATE_BOOLEAN)) {
+// --------------------------------------------------------------------------
+// Disable WP-Cron so Railway scheduled jobs handle it
+// --------------------------------------------------------------------------
+if (filter_var(getenv('DISABLE_WP_CRON') ?: 'false', FILTER_VALIDATE_BOOLEAN)) {
     define('DISABLE_WP_CRON', true);
 }
 
 /* That's all, stop editing! Happy publishing. */
 
-/** Absolute path to the WordPress directory. */
 if (!defined('ABSPATH')) {
     define('ABSPATH', __DIR__ . '/');
 }
 
-/** Sets up WordPress vars and included files. */
 require_once ABSPATH . 'wp-settings.php';
