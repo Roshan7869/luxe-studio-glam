@@ -144,9 +144,6 @@ class GlamLux_Activator
 		$found = $wpdb->get_var($wpdb->prepare("SHOW INDEX FROM {$table_name} WHERE Key_name = %s", $index_name));
 
 		return !empty($found);
-		self::ensure_payroll_staff_schema($wpdb);
-		self::ensure_shift_schema($wpdb);
-		update_option('glamlux_migration_version', $target_version);
 	}
 
 	private static function ensure_column_exists(string $table, string $column, string $definition): void
@@ -176,6 +173,27 @@ class GlamLux_Activator
 		self::ensure_column_exists($shifts_table, 'start_time', 'time DEFAULT NULL');
 		self::ensure_column_exists($shifts_table, 'end_time', 'time DEFAULT NULL');
 		self::ensure_column_exists($shifts_table, 'status', "varchar(50) DEFAULT 'scheduled' NOT NULL");
+	}
+
+	/**
+	 * Create an index only when the table exists and index is missing.
+	 */
+	private static function ensure_index_with_guard(string $table_name, string $index_name, string $columns): void
+	{
+		global $wpdb;
+
+		$table_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table_name));
+		if ($table_exists !== $table_name) {
+			return;
+		}
+
+		$index_exists = $wpdb->get_var(
+			$wpdb->prepare("SHOW INDEX FROM {$table_name} WHERE Key_name = %s", $index_name)
+		);
+
+		if (!$index_exists) {
+			$wpdb->query("ALTER TABLE {$table_name} ADD INDEX {$index_name} ({$columns})");
+		}
 	}
 
 	/**
@@ -327,7 +345,8 @@ class GlamLux_Activator
 			total_spent decimal(10,2) DEFAULT '0.00' NOT NULL,
 			notes text,
 			PRIMARY KEY  (id),
-			KEY wp_user_id (wp_user_id)
+			KEY wp_user_id (wp_user_id),
+			KEY idx_membership_expiry (membership_id, membership_expiry)
 		) $charset_collate;";
 
 		// 6. Appointments
@@ -343,7 +362,8 @@ class GlamLux_Activator
 			amount decimal(10,2) NOT NULL,
 			payment_status varchar(50) DEFAULT 'pending' NOT NULL,
 			PRIMARY KEY  (id),
-			KEY salon_time (salon_id, appointment_time)
+			KEY salon_time (salon_id, appointment_time),
+			KEY idx_salon_time_status (salon_id, appointment_time, status)
 		) $charset_collate;";
 
 		// 7. Payroll
@@ -358,7 +378,8 @@ class GlamLux_Activator
 			status varchar(50) DEFAULT 'pending' NOT NULL,
 			processed_at datetime DEFAULT NULL,
 			PRIMARY KEY  (id),
-			KEY staff_period (staff_id, period_start)
+			KEY staff_period (staff_id, period_start),
+			KEY idx_staff_period_status (staff_id, period_start, period_end, status)
 		) $charset_collate;";
 
 		// 8. Product Sales
@@ -450,7 +471,8 @@ class GlamLux_Activator
 			updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
 			PRIMARY KEY  (id),
 			KEY status (status),
-			KEY assigned_to (assigned_to)
+			KEY assigned_to (assigned_to),
+			KEY idx_status_assigned_created (status, assigned_to, created_at)
 		) $charset_collate;";
 
 		// 14. CRM: Follow-ups (activity log per lead)
