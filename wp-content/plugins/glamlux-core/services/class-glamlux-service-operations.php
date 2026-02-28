@@ -54,7 +54,7 @@ class GlamLux_Service_Operations
 		);
 
 		$active_memberships = (int)$wpdb->get_var(
-			"SELECT COUNT(id) FROM {$wpdb->prefix}gl_memberships WHERE status='active'"
+			"SELECT COUNT(id) FROM {$wpdb->prefix}gl_clients WHERE membership_id IS NOT NULL AND membership_expiry IS NOT NULL AND membership_expiry > NOW()"
 		);
 
 		$active_staff = (int)$wpdb->get_var(
