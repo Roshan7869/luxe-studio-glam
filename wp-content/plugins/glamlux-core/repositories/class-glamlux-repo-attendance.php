@@ -17,7 +17,7 @@ class GlamLux_Repo_Attendance
 	{
 		global $wpdb;
 		return $wpdb->get_row($wpdb->prepare(
-			"SELECT id, staff_id, shift_date, shift_start, shift_end, type
+			"SELECT id, staff_id, shift_date, start_time, end_time, status
 			 FROM {$wpdb->prefix}gl_shifts
 			 WHERE staff_id = %d AND shift_date = %s",
 			$staff_id, $date
@@ -60,7 +60,7 @@ class GlamLux_Repo_Attendance
 	{
 		global $wpdb;
 		return $wpdb->get_results($wpdb->prepare(
-			"SELECT id, staff_id, shift_date, check_in, check_out, status, overtime_minutes
+			"SELECT id, staff_id, shift_date, check_in, check_out, status, is_late, hours_worked
 			 FROM {$wpdb->prefix}gl_attendance
 			 WHERE staff_id = %d
 			   AND YEAR(shift_date)  = %d

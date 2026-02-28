@@ -27,7 +27,7 @@ class GlamLux_Activator
 	public static function run_db_migrations(): void
 	{
 		$db_version = (int)get_option('glamlux_migration_version', 0);
-		$target_version = 5;
+		$target_version = 6;
 
 		if ($db_version >= $target_version) {
 			return;
@@ -66,7 +66,40 @@ class GlamLux_Activator
 			KEY status (status)
 		) $charset_collate;");
 
+
+
+		self::ensure_payroll_staff_schema($wpdb);
+		self::ensure_shift_schema($wpdb);
 		update_option('glamlux_migration_version', $target_version);
+	}
+
+	private static function ensure_column_exists(string $table, string $column, string $definition): void
+	{
+		global $wpdb;
+		$exists = $wpdb->get_var($wpdb->prepare("SHOW COLUMNS FROM {$table} LIKE %s", $column));
+		if ($exists) {
+			return;
+		}
+		$wpdb->query("ALTER TABLE {$table} ADD COLUMN {$column} {$definition}");
+	}
+
+	private static function ensure_payroll_staff_schema($wpdb): void
+	{
+		$staff_table = $wpdb->prefix . 'gl_staff';
+		$payroll_table = $wpdb->prefix . 'gl_payroll';
+
+		self::ensure_column_exists($staff_table, 'base_salary', "decimal(10,2) DEFAULT '0.00' NOT NULL");
+		self::ensure_column_exists($payroll_table, 'appointment_id', 'bigint(20) DEFAULT NULL');
+		self::ensure_column_exists($payroll_table, 'total_pay', "decimal(10,2) DEFAULT '0.00' NOT NULL");
+		self::ensure_column_exists($payroll_table, 'paid_at', 'datetime DEFAULT NULL');
+	}
+
+	private static function ensure_shift_schema($wpdb): void
+	{
+		$shifts_table = $wpdb->prefix . 'gl_shifts';
+		self::ensure_column_exists($shifts_table, 'start_time', 'time DEFAULT NULL');
+		self::ensure_column_exists($shifts_table, 'end_time', 'time DEFAULT NULL');
+		self::ensure_column_exists($shifts_table, 'status', "varchar(50) DEFAULT 'scheduled' NOT NULL");
 	}
 
 	/**
