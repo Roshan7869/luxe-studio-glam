@@ -123,6 +123,9 @@ function run_glamlux_core()
 	require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-cron.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-ajax.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-site-provisioner.php';
+	if ( defined('WP_CLI') && WP_CLI ) {
+		require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-cli-health.php';
+	}
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-base-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-salon-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-service-controller.php';

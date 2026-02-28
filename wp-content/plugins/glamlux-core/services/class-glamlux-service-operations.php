@@ -53,9 +53,21 @@ class GlamLux_Service_Operations
 			"SELECT COUNT(id) FROM {$wpdb->prefix}gl_appointments WHERE status IN ('pending', 'scheduled')"
 		);
 
-		$active_memberships = (int)$wpdb->get_var(
-			"SELECT COUNT(id) FROM {$wpdb->prefix}gl_memberships WHERE status='active'"
-		);
+		$membership_table   = $wpdb->prefix . 'gl_memberships';
+		$membership_columns = $wpdb->get_col( "SHOW COLUMNS FROM {$membership_table}", 0 );
+		if ( in_array( 'status', $membership_columns, true ) ) {
+			$active_memberships = (int)$wpdb->get_var(
+				"SELECT COUNT(id) FROM {$membership_table} WHERE status='active'"
+			);
+		} elseif ( in_array( 'is_active', $membership_columns, true ) ) {
+			$active_memberships = (int)$wpdb->get_var(
+				"SELECT COUNT(id) FROM {$membership_table} WHERE is_active=1"
+			);
+		} else {
+			$active_memberships = (int)$wpdb->get_var(
+				"SELECT COUNT(id) FROM {$membership_table}"
+			);
+		}
 
 		$active_staff = (int)$wpdb->get_var(
 			"SELECT COUNT(id) FROM {$wpdb->prefix}gl_staff WHERE is_active=1"
