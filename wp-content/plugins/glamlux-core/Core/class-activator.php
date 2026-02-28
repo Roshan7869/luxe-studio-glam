@@ -333,6 +333,7 @@ class GlamLux_Activator
 			duration_months int(11) DEFAULT 1 NOT NULL,
 			benefits text,
 			banner_image_url varchar(255) DEFAULT NULL,
+			is_active tinyint(1) DEFAULT 1 NOT NULL,
 			PRIMARY KEY  (id)
 		) $charset_collate;";
 
