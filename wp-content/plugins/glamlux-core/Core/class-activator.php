@@ -26,10 +26,10 @@ class GlamLux_Activator
 	 */
 	public static function run_db_migrations(): void
 	{
-		$db_version = (int)get_option('glamlux_migration_version', 0);
-		$target_version = 5;
+		$version = (int) get_option('glamlux_migration_version', 0);
+		$target_version = 6;
 
-		if ($db_version >= $target_version) {
+		if ($version >= $target_version) {
 			return;
 		}
 
@@ -37,36 +37,208 @@ class GlamLux_Activator
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		$charset_collate = $wpdb->get_charset_collate();
 
-		// Table: Mode change audit log
-		$table_audit = $wpdb->prefix . 'gl_mode_audit';
-		dbDelta("CREATE TABLE $table_audit (
-			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-			user_id bigint(20) unsigned NOT NULL,
-			previous_mode varchar(50) NOT NULL,
-			new_mode varchar(50) NOT NULL,
-			ip_address varchar(45) NOT NULL,
-			created_at datetime NOT NULL,
-			PRIMARY KEY (id),
-			KEY user_id (user_id)
-		) $charset_collate;");
+		// Step 1: EMS tables (historical migrate-v3-ems.php)
+		if ($version < 1) {
+			dbDelta("CREATE TABLE {$wpdb->prefix}gl_attendance (
+				id bigint(20) NOT NULL AUTO_INCREMENT,
+				staff_id bigint(20) NOT NULL,
+				salon_id bigint(20) NOT NULL,
+				shift_date date NOT NULL,
+				check_in datetime DEFAULT NULL,
+				check_out datetime DEFAULT NULL,
+				hours_worked decimal(5,2) DEFAULT 0.00,
+				is_late tinyint(1) DEFAULT 0,
+				late_minutes int(11) DEFAULT 0,
+				status varchar(50) DEFAULT 'present' NOT NULL,
+				created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+				PRIMARY KEY  (id),
+				KEY staff_id (staff_id),
+				KEY shift_date (shift_date),
+				UNIQUE KEY staff_shift (staff_id, shift_date)
+			) $charset_collate;");
 
-		// Table: Webhook idempotency tracking
-		$table_webhooks = $wpdb->prefix . 'gl_webhook_events';
-		dbDelta("CREATE TABLE $table_webhooks (
-			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-			gateway varchar(50) NOT NULL,
-			transaction_id varchar(100) NOT NULL,
-			event_type varchar(50) NOT NULL,
-			payload longtext NOT NULL,
-			status varchar(20) NOT NULL DEFAULT 'processing',
-			processed_at datetime DEFAULT NULL,
-			created_at datetime NOT NULL,
-			PRIMARY KEY (id),
-			UNIQUE KEY gateway_transaction (gateway, transaction_id),
-			KEY status (status)
-		) $charset_collate;");
+			dbDelta("CREATE TABLE {$wpdb->prefix}gl_shifts (
+				id bigint(20) NOT NULL AUTO_INCREMENT,
+				staff_id bigint(20) NOT NULL,
+				salon_id bigint(20) NOT NULL,
+				shift_date date NOT NULL,
+				start_time time NOT NULL,
+				end_time time NOT NULL,
+				status varchar(50) DEFAULT 'scheduled' NOT NULL,
+				created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+				PRIMARY KEY  (id),
+				KEY staff_id (staff_id),
+				KEY shift_date (shift_date),
+				UNIQUE KEY staff_shift (staff_id, shift_date)
+			) $charset_collate;");
 
-		update_option('glamlux_migration_version', $target_version);
+			$version = 1;
+			update_option('glamlux_migration_version', $version);
+		}
+
+		// Step 2: Membership module (historical migrate-v4-membership.php)
+		if ($version < 2) {
+			dbDelta("CREATE TABLE {$wpdb->prefix}gl_membership_purchases (
+				id bigint(20) NOT NULL AUTO_INCREMENT,
+				client_id bigint(20) NOT NULL,
+				membership_id bigint(20) NOT NULL,
+				source varchar(50) NOT NULL DEFAULT 'manual',
+				wc_order_id bigint(20) DEFAULT 0,
+				granted_at datetime NOT NULL,
+				expires_at datetime NOT NULL,
+				status varchar(50) NOT NULL DEFAULT 'active',
+				PRIMARY KEY  (id),
+				KEY client_id (client_id),
+				KEY membership_id (membership_id),
+				KEY granted_at (granted_at)
+			) $charset_collate;");
+
+			$memberships_table = $wpdb->prefix . 'gl_memberships';
+			if (self::table_exists($memberships_table)) {
+				if (!self::column_exists($memberships_table, 'description')) {
+					$wpdb->query("ALTER TABLE {$memberships_table} ADD COLUMN description text DEFAULT NULL AFTER name");
+				}
+				if (!self::column_exists($memberships_table, 'discount_percent')) {
+					$wpdb->query("ALTER TABLE {$memberships_table} ADD COLUMN discount_percent decimal(5,2) DEFAULT 0.00 AFTER duration_months");
+				}
+				if (!self::column_exists($memberships_table, 'wc_product_id')) {
+					$wpdb->query("ALTER TABLE {$memberships_table} ADD COLUMN wc_product_id bigint(20) DEFAULT 0 AFTER discount_percent");
+				}
+				if (!self::column_exists($memberships_table, 'is_active')) {
+					$wpdb->query("ALTER TABLE {$memberships_table} ADD COLUMN is_active tinyint(1) DEFAULT 1 AFTER wc_product_id");
+				}
+				if (!self::column_exists($memberships_table, 'duration_months')) {
+					$wpdb->query("ALTER TABLE {$memberships_table} ADD COLUMN duration_months int(11) DEFAULT 12 AFTER price");
+				}
+
+				$existing = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$memberships_table}");
+				if ($existing === 0) {
+					$wpdb->insert($memberships_table, [
+						'name' => 'Silver',
+						'description' => 'Entry-level membership — 5% service discount.',
+						'price' => 999.00,
+						'duration_months' => 12,
+						'discount_percent' => 5,
+						'wc_product_id' => 0,
+						'is_active' => 1,
+					]);
+					$wpdb->insert($memberships_table, [
+						'name' => 'Gold',
+						'description' => 'Premium membership — 10% service discount + priority booking.',
+						'price' => 2499.00,
+						'duration_months' => 12,
+						'discount_percent' => 10,
+						'wc_product_id' => 0,
+						'is_active' => 1,
+					]);
+					$wpdb->insert($memberships_table, [
+						'name' => 'Platinum',
+						'description' => 'Elite membership — 20% discount + free monthly treatment.',
+						'price' => 4999.00,
+						'duration_months' => 12,
+						'discount_percent' => 20,
+						'wc_product_id' => 0,
+						'is_active' => 1,
+					]);
+				}
+			}
+
+			$version = 2;
+			update_option('glamlux_migration_version', $version);
+		}
+
+		// Step 3: Performance indexes (historical migrate-v4-indexes.php)
+		if ($version < 3) {
+			$service_logs_table = $wpdb->prefix . 'gl_service_logs';
+			if (self::table_exists($service_logs_table) && !self::index_exists($service_logs_table, 'appointment_id')) {
+				$wpdb->query("ALTER TABLE {$service_logs_table} ADD KEY appointment_id (appointment_id)");
+			}
+
+			$product_sales_table = $wpdb->prefix . 'gl_product_sales';
+			if (self::table_exists($product_sales_table) && !self::index_exists($product_sales_table, 'wc_order_id')) {
+				$wpdb->query("ALTER TABLE {$product_sales_table} ADD KEY wc_order_id (wc_order_id)");
+			}
+			if (self::table_exists($product_sales_table) && !self::index_exists($product_sales_table, 'client_id')) {
+				$wpdb->query("ALTER TABLE {$product_sales_table} ADD KEY client_id (client_id)");
+			}
+
+			$franchises_table = $wpdb->prefix . 'gl_franchises';
+			if (self::table_exists($franchises_table) && !self::index_exists($franchises_table, 'admin_id')) {
+				$wpdb->query("ALTER TABLE {$franchises_table} ADD KEY admin_id (admin_id)");
+			}
+
+			$version = 3;
+			update_option('glamlux_migration_version', $version);
+		}
+
+		// Step 4: Governance tables (historical migrate-v5-system-mode.php)
+		if ($version < 4) {
+			$table_audit = $wpdb->prefix . 'gl_mode_audit';
+			dbDelta("CREATE TABLE $table_audit (
+				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+				user_id bigint(20) unsigned NOT NULL,
+				previous_mode varchar(50) NOT NULL,
+				new_mode varchar(50) NOT NULL,
+				ip_address varchar(45) NOT NULL,
+				created_at datetime NOT NULL,
+				PRIMARY KEY (id),
+				KEY user_id (user_id)
+			) $charset_collate;");
+
+			$table_webhooks = $wpdb->prefix . 'gl_webhook_events';
+			dbDelta("CREATE TABLE $table_webhooks (
+				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+				gateway varchar(50) NOT NULL,
+				transaction_id varchar(100) NOT NULL,
+				event_type varchar(50) NOT NULL,
+				payload longtext NOT NULL,
+				status varchar(20) NOT NULL DEFAULT 'processing',
+				processed_at datetime DEFAULT NULL,
+				created_at datetime NOT NULL,
+				PRIMARY KEY (id),
+				UNIQUE KEY gateway_transaction (gateway, transaction_id),
+				KEY status (status)
+			) $charset_collate;");
+
+			$version = 4;
+			update_option('glamlux_migration_version', $version);
+		}
+
+		// Step 5: Canonical migration checkpoint after consolidation in run_db_migrations.
+		if ($version < 5) {
+			$version = 5;
+			update_option('glamlux_migration_version', $version);
+		}
+
+		// Step 6: Current target migration version.
+		if ($version < $target_version) {
+			update_option('glamlux_migration_version', $target_version);
+		}
+	}
+
+	private static function table_exists(string $table_name): bool
+	{
+		global $wpdb;
+		$like = $wpdb->esc_like($table_name);
+		$found = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $like));
+
+		return $found === $table_name;
+	}
+
+	private static function column_exists(string $table_name, string $column_name): bool
+	{
+		global $wpdb;
+		$found = $wpdb->get_var($wpdb->prepare("SHOW COLUMNS FROM {$table_name} LIKE %s", $column_name));
+
+		return !empty($found);
+	}
+
+	private static function index_exists(string $table_name, string $index_name): bool
+	{
+		global $wpdb;
+		$found = $wpdb->get_var($wpdb->prepare("SHOW INDEX FROM {$table_name} WHERE Key_name = %s", $index_name));
+
+		return !empty($found);
 	}
 
 	/**

@@ -13,7 +13,6 @@ if (!defined('WPINC')) {
 }
 
 define('GLAMLUX_VERSION', '3.0.0');
-define('GLAMLUX_DB_VERSION', '2.3.0');
 define('GLAMLUX_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('GLAMLUX_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -68,7 +67,6 @@ function activate_glamlux_core()
 {
 	require_once GLAMLUX_PLUGIN_DIR . 'Core/class-activator.php';
 	GlamLux_Activator::activate();
-	update_option('glamlux_db_version', GLAMLUX_DB_VERSION);
 }
 function deactivate_glamlux_core()
 {
@@ -84,11 +82,8 @@ register_deactivation_hook(__FILE__, 'deactivate_glamlux_core');
 
 function glamlux_maybe_upgrade()
 {
-	if (get_option('glamlux_db_version') !== GLAMLUX_DB_VERSION) {
-		require_once GLAMLUX_PLUGIN_DIR . 'Core/class-activator.php';
-		GlamLux_Activator::activate();
-		update_option('glamlux_db_version', GLAMLUX_DB_VERSION);
-	}
+	require_once GLAMLUX_PLUGIN_DIR . 'Core/class-activator.php';
+	GlamLux_Activator::run_db_migrations();
 }
 add_action('plugins_loaded', 'glamlux_maybe_upgrade', 1);
 
