@@ -21,11 +21,13 @@ docker compose up -d --build
 sleep 15
 
 # Install WordPress automatically
+ADMIN_PASS=$(openssl rand -base64 12)
+echo "⚠️  IMPORTANT: Your WP admin password is: $ADMIN_PASS  — change this after first login!"
 docker exec glamlux_wp wp core install \
     --url="http://localhost" \
     --title="GlamLux2Lux" \
     --admin_user="admin" \
-    --admin_password="admin123" \
+    --admin_password="$ADMIN_PASS" \
     --admin_email="admin@glamlux.com" \
     --allow-root
 
