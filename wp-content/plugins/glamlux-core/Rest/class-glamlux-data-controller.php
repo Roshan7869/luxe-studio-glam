@@ -86,7 +86,7 @@ class GlamLux_Data_Controller extends GlamLux_Base_Controller
             ARRAY_A
         ) ?: [];
 
-        set_transient('gl_api_memberships', $rows, 5 * MINUTE_IN_SECONDS);
+        set_transient('gl_api_memberships', $rows, 15 * MINUTE_IN_SECONDS);
         return rest_ensure_response($rows);
     }
 
@@ -117,7 +117,7 @@ class GlamLux_Data_Controller extends GlamLux_Base_Controller
             $limit
         ), ARRAY_A) ?: [];
 
-        set_transient('gl_api_service_logs_' . $salon . '_' . $limit, $rows, 5 * MINUTE_IN_SECONDS);
+        set_transient('gl_api_service_logs_' . $salon . '_' . $limit, $rows, 15 * MINUTE_IN_SECONDS);
         return rest_ensure_response($rows);
     }
 
@@ -135,7 +135,7 @@ class GlamLux_Data_Controller extends GlamLux_Base_Controller
             ARRAY_A
         ) ?: [];
 
-        set_transient('gl_api_franchises', $rows, 5 * MINUTE_IN_SECONDS);
+        set_transient('gl_api_franchises', $rows, 15 * MINUTE_IN_SECONDS);
         return rest_ensure_response($rows);
     }
 
@@ -162,7 +162,7 @@ class GlamLux_Data_Controller extends GlamLux_Base_Controller
             ARRAY_A
         ) ?: [];
 
-        set_transient('gl_api_staff_profiles_' . $salon, $rows, 5 * MINUTE_IN_SECONDS);
+        set_transient('gl_api_staff_profiles_' . $salon, $rows, 15 * MINUTE_IN_SECONDS);
         return rest_ensure_response($rows);
     }
 

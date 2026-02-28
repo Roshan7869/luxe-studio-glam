@@ -4,6 +4,7 @@ class GlamLux_REST_Manager
 	public function __construct()
 	{
 		add_filter('rest_pre_dispatch', [$this, 'check_rate_limit'], 10, 3);
+		add_filter('rest_post_dispatch', [$this, 'add_caching_headers'], 10, 3);
 		add_action('rest_api_init', [$this, 'init_controllers']);
 	}
 	public function init_controllers()
@@ -64,5 +65,14 @@ class GlamLux_REST_Manager
 		$data['count']++;
 		set_transient($transient_key, $data, max(1, $window - (time() - $data['start'])));
 		return $result;
+	}
+
+	public function add_caching_headers($response, $server, $request)
+	{
+		$route = $request->get_route();
+		if (strpos($route, '/glamlux/v1') === 0 && $request->get_method() === 'GET') {
+			$response->header('Cache-Control', 'public, max-age=900');
+		}
+		return $response;
 	}
 }
