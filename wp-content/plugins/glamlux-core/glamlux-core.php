@@ -252,7 +252,7 @@ add_action('init', function () {
 	if (get_option('glamlux_enterprise_seed_v1')) {
 		wp_die('✅ Enterprise dataset was already seeded on ' . get_option('glamlux_enterprise_seed_v1') . '. To re-seed, delete the <code>glamlux_enterprise_seed_v1</code> option.');
 	}
-	require_once GLAMLUX_PLUGIN_DIR . 'scripts/seed-enterprise-visual-dataset.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'scripts/_dev-only/seed-enterprise-visual-dataset.php';
 	update_option('glamlux_enterprise_seed_v1', gmdate('Y-m-d H:i:s'));
 	wp_die('✅ Enterprise visual dataset seeded successfully! All 69 records are now live in the database.');
 });
