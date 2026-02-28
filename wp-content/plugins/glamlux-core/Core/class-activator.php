@@ -202,6 +202,15 @@ class GlamLux_Activator
 	 */
 	public static function update_role_capabilities()
 	{
+		// ── Standard Administrator: Grant all GlamLux platform capabilities ──
+		$admin = get_role('administrator');
+		if ($admin) {
+			$admin->add_cap('manage_glamlux_platform');
+			$admin->add_cap('manage_glamlux_franchise');
+			$admin->add_cap('manage_glamlux_appointments');
+			$admin->add_cap('view_state_reports');
+		}
+
 		// ── Super Admin: Full WordPress editorial + platform management ──────
 		$super = get_role('glamlux_super_admin');
 		if ($super) {
