@@ -27,7 +27,7 @@ class GlamLux_Activator
 	public static function run_db_migrations(): void
 	{
 		$db_version = (int)get_option('glamlux_migration_version', 0);
-		$target_version = 5;
+		$target_version = 6;
 
 		if ($db_version >= $target_version) {
 			return;
@@ -64,6 +64,64 @@ class GlamLux_Activator
 			PRIMARY KEY (id),
 			UNIQUE KEY gateway_transaction (gateway, transaction_id),
 			KEY status (status)
+		) $charset_collate;");
+
+		// Table: Membership purchases
+		$table_membership_purchases = $wpdb->prefix . 'gl_membership_purchases';
+		dbDelta("CREATE TABLE $table_membership_purchases (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			client_id bigint(20) unsigned NOT NULL,
+			membership_id bigint(20) unsigned NOT NULL,
+			source varchar(50) NOT NULL DEFAULT 'manual',
+			wc_order_id bigint(20) unsigned DEFAULT 0,
+			granted_at datetime NOT NULL,
+			expires_at datetime NOT NULL,
+			status varchar(50) NOT NULL DEFAULT 'active',
+			PRIMARY KEY (id),
+			KEY client_id (client_id),
+			KEY membership_id (membership_id),
+			KEY granted_at (granted_at),
+			KEY membership_granted (membership_id, granted_at)
+		) $charset_collate;");
+
+		// Table: Staff attendance
+		$table_attendance = $wpdb->prefix . 'gl_attendance';
+		dbDelta("CREATE TABLE $table_attendance (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			staff_id bigint(20) unsigned NOT NULL,
+			salon_id bigint(20) unsigned NOT NULL,
+			shift_date date NOT NULL,
+			check_in datetime DEFAULT NULL,
+			check_out datetime DEFAULT NULL,
+			hours_worked decimal(5,2) DEFAULT 0.00,
+			overtime_minutes int(11) DEFAULT 0,
+			is_late tinyint(1) DEFAULT 0,
+			late_minutes int(11) DEFAULT 0,
+			status varchar(50) NOT NULL DEFAULT 'present',
+			created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+			PRIMARY KEY (id),
+			UNIQUE KEY staff_shift (staff_id, shift_date),
+			KEY staff_id (staff_id),
+			KEY shift_date (shift_date),
+			KEY salon_status_date (salon_id, status, shift_date)
+		) $charset_collate;");
+
+		// Table: Staff shifts
+		$table_shifts = $wpdb->prefix . 'gl_shifts';
+		dbDelta("CREATE TABLE $table_shifts (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			staff_id bigint(20) unsigned NOT NULL,
+			salon_id bigint(20) unsigned NOT NULL,
+			shift_date date NOT NULL,
+			shift_start time NOT NULL,
+			shift_end time NOT NULL,
+			type varchar(50) NOT NULL DEFAULT 'scheduled',
+			created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+			PRIMARY KEY (id),
+			UNIQUE KEY staff_shift (staff_id, shift_date),
+			KEY staff_id (staff_id),
+			KEY shift_date (shift_date),
+			KEY salon_date (salon_id, shift_date)
 		) $charset_collate;");
 
 		update_option('glamlux_migration_version', $target_version);
@@ -382,6 +440,61 @@ class GlamLux_Activator
 			UNIQUE KEY metric_key (metric_key)
 		) $charset_collate;";
 
+		// 17. Membership Purchases
+		$sql_membership_purchases = "CREATE TABLE {$wpdb->prefix}gl_membership_purchases (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			client_id bigint(20) unsigned NOT NULL,
+			membership_id bigint(20) unsigned NOT NULL,
+			source varchar(50) NOT NULL DEFAULT 'manual',
+			wc_order_id bigint(20) unsigned DEFAULT 0,
+			granted_at datetime NOT NULL,
+			expires_at datetime NOT NULL,
+			status varchar(50) NOT NULL DEFAULT 'active',
+			PRIMARY KEY  (id),
+			KEY client_id (client_id),
+			KEY membership_id (membership_id),
+			KEY granted_at (granted_at),
+			KEY membership_granted (membership_id, granted_at)
+		) $charset_collate;";
+
+		// 18. Attendance
+		$sql_attendance = "CREATE TABLE {$wpdb->prefix}gl_attendance (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			staff_id bigint(20) unsigned NOT NULL,
+			salon_id bigint(20) unsigned NOT NULL,
+			shift_date date NOT NULL,
+			check_in datetime DEFAULT NULL,
+			check_out datetime DEFAULT NULL,
+			hours_worked decimal(5,2) DEFAULT 0.00,
+			overtime_minutes int(11) DEFAULT 0,
+			is_late tinyint(1) DEFAULT 0,
+			late_minutes int(11) DEFAULT 0,
+			status varchar(50) DEFAULT 'present' NOT NULL,
+			created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY staff_shift (staff_id, shift_date),
+			KEY staff_id (staff_id),
+			KEY shift_date (shift_date),
+			KEY salon_status_date (salon_id, status, shift_date)
+		) $charset_collate;";
+
+		// 19. Shifts
+		$sql_shifts = "CREATE TABLE {$wpdb->prefix}gl_shifts (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			staff_id bigint(20) unsigned NOT NULL,
+			salon_id bigint(20) unsigned NOT NULL,
+			shift_date date NOT NULL,
+			shift_start time NOT NULL,
+			shift_end time NOT NULL,
+			type varchar(50) DEFAULT 'scheduled' NOT NULL,
+			created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY staff_shift (staff_id, shift_date),
+			KEY staff_id (staff_id),
+			KEY shift_date (shift_date),
+			KEY salon_date (salon_id, shift_date)
+		) $charset_collate;";
+
 		// Execute all dbDelta calls
 		dbDelta($sql_franchises);
 		dbDelta($sql_salons);
@@ -399,6 +512,9 @@ class GlamLux_Activator
 		dbDelta($sql_followups);
 		dbDelta($sql_territories);
 		dbDelta($sql_metrics_cache);
+		dbDelta($sql_membership_purchases);
+		dbDelta($sql_attendance);
+		dbDelta($sql_shifts);
 	}
 
 	/**
