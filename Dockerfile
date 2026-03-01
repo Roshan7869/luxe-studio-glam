@@ -18,6 +18,11 @@ RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
 # Copy custom wp-content (themes + plugins)
 COPY wp-content /var/www/html/wp-content
+COPY composer.json /var/www/html/composer.json
+
+# Install Composer & Dependencies
+COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
+RUN cd /var/www/html && composer install --no-dev --optimize-autoloader || true
 
 # Copy our Railway-optimized wp-config (reads MYSQLHOST / WORDPRESS_DB_* safely)
 COPY wp-config-railway.php /var/www/html/wp-config.php
