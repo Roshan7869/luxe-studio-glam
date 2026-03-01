@@ -1,678 +1,748 @@
 <?php
 /**
  * GlamLux2Lux — Premium Front Page
- * Ultra-luxury design: Hero + Stats + Services + Testimonials + CTA
+ * Professional redesign — lean, synchronized, enterprise-grade
  */
 get_header();
 
-// ─── Hero content — pulled from WP Customizer (Appearance → Customize → GlamLux Platform)
-$hero_bg = get_theme_mod('glamlux_hero_bg', 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1600&h=900&fit=crop&auto=format&q=85');
+// ─── Configuration
+$hero_bg = get_theme_mod('glamlux_hero_bg', 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1920&h=1080&fit=crop&auto=format&q=85');
 $hero_headline = get_theme_mod('glamlux_hero_headline', 'The Art of Refined Beauty');
 $hero_subtitle = get_theme_mod('glamlux_hero_subtitle', 'Seamless luxury beauty management and global franchise growth — powered by enterprise-grade SaaS intelligence.');
 $hero_badge = get_theme_mod('glamlux_hero_badge', "India's Premier Luxury Beauty Franchise");
-$cta_label = get_theme_mod('glamlux_cta_label', 'Book Appointment');
-$cta_url = get_theme_mod('glamlux_cta_url', '#services');
-$fc_label = get_theme_mod('glamlux_franchise_cta_label', 'Own a Franchise');
-$fc_url = get_theme_mod('glamlux_franchise_cta_url', '/franchise');
-$site_name = get_bloginfo('name');
 
-// ─── Fetch services directly from DB (with fallback static data)
+// ─── Fetch Services (DB → Fallback)
 $services_raw = get_transient('glamlux_fp_services_db');
 if (false === $services_raw) {
     global $wpdb;
-    $table_name = $wpdb->prefix . 'gl_service_pricing';
-
-    // Check if table exists first (in case plugin is down)
-    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
-
-    if ($table_exists) {
-        $services_raw = $wpdb->get_results("
-            SELECT service_name as name, description, CONCAT('₹', CAST(base_price AS UNSIGNED)) as price_display, image_url 
-            FROM {$table_name} 
-            WHERE is_active = 1 
-            ORDER BY menu_order ASC 
-            LIMIT 6
-        ", ARRAY_A);
+    $t = $wpdb->prefix . 'gl_service_pricing';
+    if ($wpdb->get_var("SHOW TABLES LIKE '{$t}'") === $t) {
+        $services_raw = $wpdb->get_results(
+            "SELECT service_name as name, description, CONCAT('₹', CAST(base_price AS UNSIGNED)) as price_display, image_url FROM {$t} WHERE is_active=1 ORDER BY menu_order ASC LIMIT 6",
+            ARRAY_A
+        );
     }
-    else {
-        $services_raw = [];
-    }
-
-    if (!is_array($services_raw)) {
-        $services_raw = [];
-    }
-
-    // Cache for 15 minutes
+    $services_raw = is_array($services_raw) ? $services_raw : [];
     set_transient('glamlux_fp_services_db', $services_raw, 15 * MINUTE_IN_SECONDS);
 }
-
-$fallback_services = array(
-    [
-        'name' => 'Skincare Rituals',
-        'description' => 'Bespoke facial treatments curated for every skin type by certified aestheticians.',
-        'price_display' => 'From ₹2,499',
-        'image_url' => 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600&h=450&fit=crop&auto=format&q=80',
-    ],
-    [
-        'name' => 'Hair Couture',
-        'description' => 'Editorial cuts, colour transformations, and scalp therapies using premium produce.',
-        'price_display' => 'From ₹1,799',
-        'image_url' => 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=450&fit=crop&auto=format&q=80',
-    ],
-    [
-        'name' => 'Body Luxe Therapy',
-        'description' => 'Signature massage rituals and wraps designed to restore and rejuvenate completely.',
-        'price_display' => 'From ₹3,299',
-        'image_url' => 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600&h=450&fit=crop&auto=format&q=80',
-    ],
-    [
-        'name' => 'Nail Atelier',
-        'description' => 'Precision nail artistry with exclusive gel collections and spa manicure finishing.',
-        'price_display' => 'From ₹799',
-        'image_url' => 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=600&h=450&fit=crop&auto=format&q=80',
-    ],
-    [
-        'name' => 'Bridal Intelligence',
-        'description' => 'Full-service bridal preparation designed for the most important day of your life.',
-        'price_display' => 'Custom',
-        'image_url' => 'https://images.unsplash.com/photo-1526045612212-70caf35c14df?w=600&h=450&fit=crop&auto=format&q=80',
-    ],
-    [
-        'name' => 'Franchise SaaS',
-        'description' => 'Manage multi-location operations from a single enterprise-grade beauty OS dashboard.',
-        'price_display' => 'Enterprise',
-        'image_url' => 'https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=600&h=450&fit=crop&auto=format&q=80',
-    ],
-);
+$fallback_services = [
+    ['name' => 'Skincare Rituals', 'description' => 'Bespoke facial treatments curated for every skin type by certified aestheticians.', 'price_display' => 'From ₹2,499', 'image_url' => 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=480&h=360&fit=crop&q=80', 'icon' => '✦'],
+    ['name' => 'Hair Couture', 'description' => 'Editorial cuts, colour transformations, and scalp therapies using premium produce.', 'price_display' => 'From ₹1,799', 'image_url' => 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=480&h=360&fit=crop&q=80', 'icon' => '◈'],
+    ['name' => 'Body Luxe Therapy', 'description' => 'Signature massage rituals and wraps designed to restore and rejuvenate completely.', 'price_display' => 'From ₹3,299', 'image_url' => 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=480&h=360&fit=crop&q=80', 'icon' => '❋'],
+    ['name' => 'Nail Atelier', 'description' => 'Precision nail artistry with exclusive gel collections and spa manicure finishing.', 'price_display' => 'From ₹799', 'image_url' => 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=480&h=360&fit=crop&q=80', 'icon' => '◇'],
+    ['name' => 'Bridal Intelligence', 'description' => 'Full-service bridal preparation designed for the most important day of your life.', 'price_display' => 'Custom', 'image_url' => 'https://images.unsplash.com/photo-1526045612212-70caf35c14df?w=480&h=360&fit=crop&q=80', 'icon' => '✿'],
+    ['name' => 'Franchise SaaS', 'description' => 'Manage multi-location operations from a single enterprise-grade beauty OS dashboard.', 'price_display' => 'Enterprise', 'image_url' => 'https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=480&h=360&fit=crop&q=80', 'icon' => '⬡'],
+];
 $services = !empty($services_raw) ? array_slice($services_raw, 0, 6) : $fallback_services;
 
-
-// ─── Fetch Salons directly from DB
+// ─── Fetch Salons
 $salons_raw = get_transient('glamlux_fp_salons_db');
 if (false === $salons_raw) {
     global $wpdb;
-    $table_salons = $wpdb->prefix . 'gl_salons';
-    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_salons}'") === $table_salons;
-
-    if ($table_exists) {
-        $salons_raw = $wpdb->get_results("
-            SELECT name, address, interior_image_url as image_url 
-            FROM {$table_salons} 
-            WHERE is_active = 1 
-            ORDER BY created_at ASC 
-            LIMIT 6
-        ", ARRAY_A);
+    $t = $wpdb->prefix . 'gl_salons';
+    if ($wpdb->get_var("SHOW TABLES LIKE '{$t}'") === $t) {
+        $salons_raw = $wpdb->get_results(
+            "SELECT name, address, interior_image_url as image_url FROM {$t} WHERE is_active=1 ORDER BY id ASC LIMIT 6",
+            ARRAY_A
+        );
     }
-    else {
-        $salons_raw = [];
-    }
+    $salons_raw = is_array($salons_raw) ? $salons_raw : [];
     set_transient('glamlux_fp_salons_db', $salons_raw, 15 * MINUTE_IN_SECONDS);
 }
-$salons = !empty($salons_raw) && is_array($salons_raw) ? $salons_raw : [];
+$salons = !empty($salons_raw) ? $salons_raw : [];
 
-
-// ─── Fetch Staff directly from DB
+// ─── Fetch Staff
 $staff_raw = get_transient('glamlux_fp_staff_db');
 if (false === $staff_raw) {
     global $wpdb;
-    $table_staff = $wpdb->prefix . 'gl_staff';
-    $table_salons = $wpdb->prefix . 'gl_salons';
-    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_staff}'") === $table_staff;
-
-    if ($table_exists) {
-        $staff_raw = $wpdb->get_results("
-            SELECT u.display_name AS full_name, s.job_role AS role, s.profile_image_url as image_url, l.name as salon_name
-            FROM {$table_staff} s
-            LEFT JOIN {$wpdb->users} u ON s.wp_user_id = u.ID
-            LEFT JOIN {$table_salons} l ON s.salon_id = l.id
-            WHERE s.is_active = 1 
-            ORDER BY s.id ASC 
-            LIMIT 6
-        ", ARRAY_A);
+    $ts = $wpdb->prefix . 'gl_staff';
+    $tl = $wpdb->prefix . 'gl_salons';
+    if ($wpdb->get_var("SHOW TABLES LIKE '{$ts}'") === $ts) {
+        $staff_raw = $wpdb->get_results(
+            "SELECT u.display_name AS full_name, s.job_role AS role, s.profile_image_url as image_url, l.name as salon_name FROM {$ts} s LEFT JOIN {$wpdb->users} u ON s.wp_user_id=u.ID LEFT JOIN {$tl} l ON s.salon_id=l.id WHERE s.is_active=1 ORDER BY s.id ASC LIMIT 6",
+            ARRAY_A
+        );
     }
-    else {
-        $staff_raw = [];
-    }
+    $staff_raw = is_array($staff_raw) ? $staff_raw : [];
     set_transient('glamlux_fp_staff_db', $staff_raw, 15 * MINUTE_IN_SECONDS);
 }
-$staff = !empty($staff_raw) && is_array($staff_raw) ? $staff_raw : [];
+$staff = !empty($staff_raw) ? $staff_raw : [];
 
-
-// ─── Fetch Transformation Gallery (Service Logs) directly from DB
-$logs_raw = get_transient('glamlux_fp_logs_db');
-if (false === $logs_raw) {
-    global $wpdb;
-    $table_logs = $wpdb->prefix . 'gl_service_logs';
-    $table_appointments = $wpdb->prefix . 'gl_appointments';
-    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_logs}'") === $table_logs;
-
-    if ($table_exists) {
-        $logs_raw = $wpdb->get_results("
-            SELECT l.before_image_url, l.after_image_url, a.service_name 
-            FROM {$table_logs} l
-            LEFT JOIN {$table_appointments} a ON l.appointment_id = a.id
-            WHERE l.before_image_url IS NOT NULL AND l.after_image_url IS NOT NULL 
-            ORDER BY l.logged_at DESC 
-            LIMIT 6
-        ", ARRAY_A);
-    }
-    else {
-        $logs_raw = [];
-    }
-    set_transient('glamlux_fp_logs_db', $logs_raw, 15 * MINUTE_IN_SECONDS);
-}
-$service_logs = !empty($logs_raw) && is_array($logs_raw) ? $logs_raw : [];
-
-
-// ─── Fetch Memberships directly from DB
+// ─── Fetch Memberships
 $memberships_raw = get_transient('glamlux_fp_memberships_db');
 if (false === $memberships_raw) {
     global $wpdb;
-    $table_memberships = $wpdb->prefix . 'gl_memberships';
-    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_memberships}'") === $table_memberships;
-
-    if ($table_exists) {
-        $memberships_raw = $wpdb->get_results("
-            SELECT name as tier_name, tier_level, benefits, price as price_monthly, banner_image_url 
-            FROM {$table_memberships} 
-            WHERE is_active = 1 
-            ORDER BY price ASC 
-            LIMIT 3
-        ", ARRAY_A);
+    $t = $wpdb->prefix . 'gl_memberships';
+    if ($wpdb->get_var("SHOW TABLES LIKE '{$t}'") === $t) {
+        $memberships_raw = $wpdb->get_results(
+            "SELECT name as tier_name, tier_level, benefits, price as price_monthly, banner_image_url FROM {$t} WHERE is_active=1 ORDER BY price ASC LIMIT 3",
+            ARRAY_A
+        );
     }
-    else {
-        $memberships_raw = [];
-    }
+    $memberships_raw = is_array($memberships_raw) ? $memberships_raw : [];
     set_transient('glamlux_fp_memberships_db', $memberships_raw, 15 * MINUTE_IN_SECONDS);
 }
-$memberships = !empty($memberships_raw) && is_array($memberships_raw) ? $memberships_raw : [];
-// ─── Fetch Franchises directly from DB
+$memberships = !empty($memberships_raw) ? $memberships_raw : [];
+
+// ─── Fetch Franchises
 $franchises_raw = get_transient('glamlux_fp_franchises_db');
 if (false === $franchises_raw) {
     global $wpdb;
-    $table_franchises = $wpdb->prefix . 'gl_franchises';
-    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_franchises}'") === $table_franchises;
-
-    if ($table_exists) {
-        $franchises_raw = $wpdb->get_results("
-            SELECT owner_name, email, phone, location, status 
-            FROM {$table_franchises} 
-            WHERE status IN ('active', 'pending') 
-            ORDER BY created_at DESC 
-            LIMIT 3
-        ", ARRAY_A);
+    $t = $wpdb->prefix . 'gl_franchises';
+    if ($wpdb->get_var("SHOW TABLES LIKE '{$t}'") === $t) {
+        $franchises_raw = $wpdb->get_results(
+            "SELECT owner_name, email, phone, location, status FROM {$t} WHERE status IN ('active','pending') ORDER BY id DESC LIMIT 6",
+            ARRAY_A
+        );
     }
-    else {
-        $franchises_raw = [];
-    }
+    $franchises_raw = is_array($franchises_raw) ? $franchises_raw : [];
     set_transient('glamlux_fp_franchises_db', $franchises_raw, 15 * MINUTE_IN_SECONDS);
 }
-$franchises = !empty($franchises_raw) && is_array($franchises_raw) ? $franchises_raw : [];
+$franchises = !empty($franchises_raw) ? $franchises_raw : [];
 
+// ─── Testimonials
+$testimonials = [
+    ['text' => 'Walking into GlamLux2Lux feels like stepping into a different world. The staff, the rituals, the attention to detail — nothing else comes close.', 'author' => 'Priya M.', 'location' => 'Mumbai'],
+    ['text' => 'As a franchise owner, the SaaS dashboard has transformed how I run three locations. Real-time data, zero guesswork.', 'author' => 'Rahul S.', 'location' => 'Bangalore'],
+    ['text' => 'My bridal experience was beyond a dream. Every detail was personalised, every moment felt like luxury perfected.', 'author' => 'Ananya D.', 'location' => 'Delhi'],
+];
 
-$testimonials = array(
-    ['text' => 'Walking into GlamLux2Lux feels like stepping into a different world. The staff, the rituals, the attention to detail — nothing else comes close.', 'author' => 'Priya M., Mumbai'],
-    ['text' => 'As a franchise owner, the SaaS dashboard has transformed how I run three locations. Real-time data, zero guesswork.', 'author' => 'Rahul S., Franchise Owner'],
-    ['text' => 'My bridal experience was beyond a dream. Every detail was personalised, every moment felt like luxury.', 'author' => 'Ananya D., Delhi'],
-);
+$stats = [
+    ['num' => '500+', 'label' => 'Franchise Locations', 'icon' => '◈'],
+    ['num' => '1.2M', 'label' => 'Satisfied Clients', 'icon' => '✦'],
+    ['num' => '18', 'label' => 'States Covered', 'icon' => '◇'],
+    ['num' => '99.9%', 'label' => 'SaaS Uptime', 'icon' => '❋'],
+];
 ?>
 
-<!-- ══ 1. HERO SECTION ════════════════════════════════════════════════════════ -->
-<section id="gl-hero" style="position:relative;min-height:100vh;display:flex;align-items:center;overflow:hidden;padding-top:72px;">
-
-    <!-- Background -->
-    <div id="hero-bg-el" class="gl-lazy-bg"
-         data-bg="<?php echo esc_url($hero_bg); ?>"
-         style="position:absolute;inset:0;background:#1a1212;background-size:cover;background-position:center;will-change:transform;transform:scale(1.08);transition:transform 0.1s linear;">
-    </div>
-
-    <!-- Gradient overlay -->
-    <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(18,18,18,0.78) 0%,rgba(18,18,18,0.35) 55%,rgba(18,18,18,0.12) 100%);z-index:1;"></div>
-
-    <!-- Ambient gold glow -->
-    <div style="position:absolute;bottom:-80px;left:40%;width:600px;height:600px;background:radial-gradient(circle,rgba(198,167,94,0.12) 0%,transparent 70%);z-index:1;pointer-events:none;"></div>
-
-    <!-- Content -->
-    <div style="position:relative;z-index:10;padding:0 80px;max-width:780px;" id="hero-content">
-
-        <!-- Eyebrow -->
-        <div id="hero-eyebrow" style="display:inline-flex;align-items:center;gap:8px;padding:6px 18px;background:rgba(198,167,94,0.15);border:1px solid rgba(198,167,94,0.35);border-radius:9999px;font-size:0.625rem;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#C6A75E;margin-bottom:28px;backdrop-filter:blur(8px);opacity:0;transform:translateY(16px);">
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="#C6A75E"><circle cx="5" cy="5" r="5"/></svg>
-            <?php echo esc_html($hero_badge); ?>
-        </div>
-
-        <!-- Headline -->
-        <h1 id="hero-headline" style="font-family:'Playfair Display',Georgia,serif;font-size:clamp(2.5rem,5vw,4.75rem);font-weight:700;line-height:1.08;letter-spacing:-0.025em;color:#fff;margin-bottom:20px;opacity:0;filter:blur(6px);transform:translateY(24px);">
-            <?php echo esc_html($hero_headline); ?>
-        </h1>
-
-        <!-- Sub -->
-        <p id="hero-sub" style="font-size:1.0625rem;color:rgba(255,255,255,0.70);line-height:1.7;max-width:480px;margin-bottom:44px;opacity:0;transform:translateY(20px);">
-            <?php echo esc_html($hero_subtitle); ?>
-        </p>
-
-        <!-- Actions -->
-        <div id="hero-actions" style="display:flex;gap:16px;flex-wrap:wrap;opacity:0;transform:translateY(20px);">
-            <a href="javascript:void(0)"
-               data-gl-modal="booking"
-               id="hero-cta-main"
-               style="display:inline-flex;align-items:center;gap:10px;background:#C6A75E;color:#fff;padding:15px 32px;border-radius:9999px;font-size:0.875rem;font-weight:600;letter-spacing:0.04em;text-decoration:none;box-shadow:0 6px 20px rgba(198,167,94,0.40);transition:all 200ms ease;animation:gl-pulse-glow 4s ease-in-out infinite;"
-               onmouseover="this.style.transform='translateY(-3px) scale(1.02)';this.style.boxShadow='0 12px 32px rgba(198,167,94,0.55)'"
-               onmouseout="this.style.transform='';this.style.boxShadow='0 6px 20px rgba(198,167,94,0.40)'">
-                <?php echo esc_html($cta_label); ?>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M8 3l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </a>
-            <a href="<?php echo esc_url($fc_url); ?>"
-                    style="display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,0.12);color:#fff;padding:15px 32px;border-radius:9999px;font-size:0.875rem;font-weight:600;letter-spacing:0.04em;border:1px solid rgba(255,255,255,0.30);cursor:pointer;backdrop-filter:blur(8px);transition:all 200ms ease;text-decoration:none;"
-                    onmouseover="this.style.background='rgba(255,255,255,0.20)';this.style.transform='translateY(-2px)'"
-                    onmouseout="this.style.background='rgba(255,255,255,0.12)';this.style.transform=''">
-                <?php echo esc_html($fc_label); ?>
-            </a>
-        </div>
-
-    </div>
-
-    <!-- Scroll hint -->
-    <div style="position:absolute;bottom:36px;left:50%;transform:translateX(-50%);z-index:10;display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0.55;" id="hero-scroll-hint">
-        <span style="font-size:0.625rem;letter-spacing:0.12em;color:#fff;text-transform:uppercase;">Scroll</span>
-        <div style="width:1px;height:40px;background:linear-gradient(to bottom,rgba(198,167,94,0.8),transparent);animation:gl-scroll-line 2s ease-in-out infinite;"></div>
-    </div>
-</section>
-
 <style>
-@keyframes gl-scroll-line {
-  0%,100%{transform:scaleY(1);opacity:0.55}
-  50%     {transform:scaleY(0.6);opacity:0.2}
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   PAGE UTILITY CLASSES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.gl-container{max-width:1320px;margin:0 auto;padding:0 56px;}
+.gl-section{padding:96px 0;}
+.gl-section-sm{padding:72px 0;}
+.gl-ornament{display:flex;align-items:center;gap:14px;justify-content:center;margin-bottom:16px;}
+.gl-ornament-line{flex:1;max-width:64px;height:1px;background:linear-gradient(90deg,transparent,rgba(198,167,94,0.45));}
+.gl-ornament-line.r{background:linear-gradient(90deg,rgba(198,167,94,0.45),transparent);}
+.gl-ornament-label{font-size:0.625rem;font-weight:600;letter-spacing:0.14em;color:var(--gold);text-transform:uppercase;}
+.gl-section-title{font-size:clamp(1.9rem,3.2vw,2.75rem);font-weight:700;color:var(--dark);letter-spacing:-0.022em;margin-bottom:14px;}
+.gl-section-sub{font-size:0.9375rem;color:var(--text-secondary);max-width:460px;margin:0 auto;line-height:1.7;}
+.gl-reveal{opacity:0;transform:translateY(24px);transition:opacity 0.55s cubic-bezier(0.4,0,0.2,1),transform 0.55s cubic-bezier(0.4,0,0.2,1);}
+.gl-reveal.is-visible{opacity:1;transform:translateY(0);}
+
+/* Cards */
+.gl-card{
+  background:#fff;border-radius:var(--radius-lg);
+  border:1px solid rgba(0,0,0,0.05);
+  box-shadow:var(--shadow-card);
+  transition:transform var(--transition-base),box-shadow var(--transition-base),border-color var(--transition-base);
+  overflow:hidden;
+}
+.gl-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-lifted);border-color:rgba(198,167,94,0.25);}
+
+/* Buttons */
+.gl-btn-gold{
+  display:inline-flex;align-items:center;gap:9px;
+  padding:14px 28px;border-radius:9999px;
+  background:var(--gold);color:#fff;
+  font-size:0.875rem;font-weight:600;letter-spacing:0.04em;
+  border:none;cursor:pointer;text-decoration:none;
+  box-shadow:0 6px 20px rgba(198,167,94,0.35);
+  transition:transform var(--transition-fast),box-shadow var(--transition-fast),background var(--transition-fast);
+}
+.gl-btn-gold:hover{background:var(--gold-dark);transform:translateY(-2px);box-shadow:0 12px 32px rgba(198,167,94,0.45);}
+.gl-btn-ghost{
+  display:inline-flex;align-items:center;gap:9px;
+  padding:14px 28px;border-radius:9999px;
+  background:transparent;color:var(--dark);
+  font-size:0.875rem;font-weight:600;letter-spacing:0.04em;
+  border:1.5px solid rgba(0,0,0,0.18);cursor:pointer;text-decoration:none;
+  transition:all var(--transition-fast);
+}
+.gl-btn-ghost:hover{background:var(--dark);color:#fff;border-color:var(--dark);}
+.gl-btn-ghost-light{
+  display:inline-flex;align-items:center;gap:9px;
+  padding:14px 28px;border-radius:9999px;
+  background:rgba(255,255,255,0.12);color:#fff;
+  font-size:0.875rem;font-weight:600;letter-spacing:0.04em;
+  border:1.5px solid rgba(255,255,255,0.28);cursor:pointer;text-decoration:none;
+  backdrop-filter:blur(8px);
+  transition:all var(--transition-fast);
+}
+.gl-btn-ghost-light:hover{background:rgba(255,255,255,0.22);transform:translateY(-2px);}
+
+/* Services horizontal scroll */
+.gl-services-scroll{
+  display:flex;gap:20px;
+  overflow-x:auto;
+  scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+  padding-bottom:8px;
+  scrollbar-width:none;
+}
+.gl-services-scroll::-webkit-scrollbar{display:none;}
+.gl-service-card{
+  flex:0 0 240px;scroll-snap-align:start;
+  padding:28px 24px;border-radius:var(--radius-lg);
+  background:#fff;border:1px solid rgba(0,0,0,0.05);
+  box-shadow:var(--shadow-soft);
+  cursor:pointer;
+  transition:transform var(--transition-base),box-shadow var(--transition-base),border-color var(--transition-base);
+  position:relative;overflow:hidden;
+}
+.gl-service-card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(198,167,94,0.0),rgba(198,167,94,0.06));
+  opacity:0;transition:opacity var(--transition-base);
+}
+.gl-service-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-card);border-color:rgba(198,167,94,0.30);}
+.gl-service-card:hover::before{opacity:1;}
+.gl-service-icon{
+  width:44px;height:44px;border-radius:12px;
+  background:linear-gradient(135deg,rgba(198,167,94,0.12),rgba(198,167,94,0.06));
+  display:grid;place-items:center;
+  margin-bottom:18px;
+  font-size:1.125rem;color:var(--gold);
+}
+
+/* Salon grid */
+.gl-salons-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:20px;
+}
+@media(max-width:1024px){.gl-salons-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:640px){.gl-salons-grid{grid-template-columns:1fr;}}
+
+/* Team */
+.gl-team-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:20px;}
+@media(max-width:1024px){.gl-team-grid{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:640px){.gl-team-grid{grid-template-columns:repeat(2,1fr);}}
+
+/* Membership */
+.gl-membership-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;align-items:center;}
+@media(max-width:900px){.gl-membership-grid{grid-template-columns:1fr;}}
+
+/* Franchise */
+.gl-franchise-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+@media(max-width:1024px){.gl-franchise-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:640px){.gl-franchise-grid{grid-template-columns:1fr;}}
+
+/* Testimonials */
+.gl-testimonial-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+@media(max-width:900px){.gl-testimonial-grid{grid-template-columns:1fr;gap:14px;}}
+
+/* Divider */
+.gl-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(0,0,0,0.06),transparent);margin:0;}
+
+/* Status badge */
+.gl-badge{
+  display:inline-block;padding:3px 10px;border-radius:9999px;
+  font-size:0.625rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+}
+.gl-badge-active{background:#e8f5e9;color:#2e7d32;}
+.gl-badge-pending{background:#fff8e1;color:#f57f17;}
+
+/* Skeleton loader */
+@keyframes gl-shimmer{0%{background-position:-400px 0;}100%{background-position:400px 0;}}
+.gl-skeleton{
+  background:linear-gradient(90deg,#f0efeb 25%,#e8e7e3 50%,#f0efeb 75%);
+  background-size:800px 100%;
+  animation:gl-shimmer 1.5s infinite linear;
+  border-radius:8px;
+}
+
+/* Pulse glow */
+@keyframes gl-pulse-glow{
+  0%,100%{box-shadow:0 6px 20px rgba(198,167,94,0.35);}
+  50%{box-shadow:0 8px 32px rgba(198,167,94,0.60);}
+}
+
+/* Modal */
+.gl-modal-overlay{
+  position:fixed;inset:0;
+  background:rgba(15,15,15,0.45);backdrop-filter:blur(8px);
+  z-index:3000;display:none;align-items:center;justify-content:center;
+  opacity:0;transition:opacity var(--transition-base);
+}
+.gl-modal-overlay.open{display:flex;}
+.gl-modal-inner{
+  background:#fff;border-radius:var(--radius-xl);padding:48px;
+  max-width:520px;width:90%;
+  box-shadow:0 32px 80px rgba(0,0,0,0.16);
+  transform:translateY(20px) scale(0.96);
+  transition:transform var(--transition-base);
+}
+.gl-modal-overlay.open .gl-modal-inner{transform:translateY(0) scale(1);}
+
+/* Form elements */
+.gl-field{margin-bottom:18px;}
+.gl-label{display:block;font-size:0.6875rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:7px;}
+.gl-input{
+  width:100%;padding:13px 16px;
+  background:var(--off-white);border:1.5px solid var(--off-white-2);
+  border-radius:var(--radius-md);font-size:0.9375rem;color:var(--dark);
+  font-family:'Inter',sans-serif;outline:none;
+  transition:border-color var(--transition-fast);
+  -webkit-appearance:none;appearance:none;
+}
+.gl-input:focus{border-color:var(--gold);}
+
+@media(max-width:768px){
+  .gl-container{padding:0 24px;}
+  .gl-section{padding:72px 0;}
+  .gl-testimonial-grid,.gl-franchise-grid{grid-template-columns:1fr;}
+  .gl-membership-grid{grid-template-columns:1fr;}
 }
 </style>
 
-<!-- ══ 2. STATS STRIP ═════════════════════════════════════════════════════════ -->
-<section class="gl-reveal" style="background:#fff;padding:0;">
-<div style="display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(0,0,0,0.06);border-bottom:1px solid rgba(0,0,0,0.06);">
-    <?php
-$stats = array(
-    ['num' => '500+', 'label' => 'Franchise Locations'],
-    ['num' => '1.2M', 'label' => 'Satisfied Clients'],
-    ['num' => '18', 'label' => 'States Covered'],
-    ['num' => '99.9%', 'label' => 'Uptime SaaS'],
-);
-foreach ($stats as $i => $s):
-?>
-    <div style="padding:44px 32px;text-align:center;<?php echo $i < count($stats) - 1 ? 'border-right:1px solid rgba(0,0,0,0.06);' : ''; ?>transition:background 180ms ease;" onmouseover="this.style.background='#FDFCF9'" onmouseout="this.style.background=''">
-        <span class="gl-counter" data-target="<?php echo esc_attr($s['num']); ?>" style="font-family:'Playfair Display',serif;font-size:2.5rem;font-weight:700;color:#C6A75E;display:block;line-height:1;"><?php echo esc_html($s['num']); ?></span>
-        <span style="font-size:0.8125rem;color:#6A6A6A;margin-top:8px;display:block;letter-spacing:0.03em;"><?php echo esc_html($s['label']); ?></span>
+<!-- ════════════════════════════════════════════════════════════
+     1. HERO SECTION
+════════════════════════════════════════════════════════════ -->
+<section id="gl-hero" style="position:relative;min-height:100vh;display:flex;align-items:center;overflow:hidden;padding-top:68px;">
+
+  <!-- Background -->
+  <div id="hero-bg-el" class="gl-lazy-bg"
+       data-bg="<?php echo esc_url($hero_bg); ?>"
+       style="position:absolute;inset:0;background:#0F0F0F;background-size:cover;background-position:center;will-change:transform;transform:scale(1.06);">
+  </div>
+
+  <!-- Overlays -->
+  <div style="position:absolute;inset:0;background:linear-gradient(110deg,rgba(15,15,15,0.82) 0%,rgba(15,15,15,0.42) 55%,rgba(15,15,15,0.15) 100%);z-index:1;"></div>
+  <div style="position:absolute;bottom:-60px;left:38%;width:560px;height:480px;background:radial-gradient(circle,rgba(198,167,94,0.10) 0%,transparent 70%);z-index:1;pointer-events:none;"></div>
+
+  <!-- Content -->
+  <div style="position:relative;z-index:10;padding:0 80px;max-width:800px;" id="hero-content">
+
+    <!-- Badge -->
+    <div id="hero-eyebrow" style="display:inline-flex;align-items:center;gap:8px;padding:6px 16px;background:rgba(198,167,94,0.14);border:1px solid rgba(198,167,94,0.32);border-radius:9999px;font-size:0.625rem;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);margin-bottom:28px;backdrop-filter:blur(8px);opacity:0;transform:translateY(14px);">
+      <span style="width:6px;height:6px;border-radius:50%;background:var(--gold);display:inline-block;"></span>
+      <?php echo esc_html($hero_badge); ?>
     </div>
-    <?php
-endforeach; ?>
-</div>
+
+    <!-- Headline -->
+    <h1 id="hero-headline" style="font-family:'Playfair Display',Georgia,serif;font-size:clamp(2.75rem,5.5vw,5rem);font-weight:700;line-height:1.06;letter-spacing:-0.028em;color:#fff;margin-bottom:22px;opacity:0;filter:blur(8px);transform:translateY(28px);">
+      <?php echo esc_html($hero_headline); ?>
+    </h1>
+
+    <!-- Subtitle -->
+    <p id="hero-sub" style="font-size:1.0625rem;color:rgba(255,255,255,0.68);line-height:1.75;max-width:500px;margin-bottom:48px;opacity:0;transform:translateY(20px);">
+      <?php echo esc_html($hero_subtitle); ?>
+    </p>
+
+    <!-- Actions -->
+    <div id="hero-actions" style="display:flex;gap:14px;flex-wrap:wrap;opacity:0;transform:translateY(20px);">
+      <a href="javascript:void(0)" data-gl-modal="booking" class="gl-btn-gold" style="animation:gl-pulse-glow 4s ease-in-out infinite;">
+        Book Appointment
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M3 7.5h9M7.5 3l4.5 4.5-4.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <a href="<?php echo esc_url(home_url('/franchise')); ?>" class="gl-btn-ghost-light">
+        Own a Franchise
+      </a>
+    </div>
+
+  </div>
+
+  <!-- Scroll hint -->
+  <div style="position:absolute;bottom:32px;left:50%;transform:translateX(-50%);z-index:10;display:flex;flex-direction:column;align-items:center;gap:7px;opacity:0;" id="hero-scroll-hint">
+    <span style="font-size:0.5625rem;letter-spacing:0.14em;color:rgba(255,255,255,0.45);text-transform:uppercase;font-weight:600;">Scroll</span>
+    <div style="width:1px;height:36px;background:linear-gradient(to bottom,rgba(198,167,94,0.7),transparent);"></div>
+  </div>
+
 </section>
 
-<!-- ══ 3. SERVICES GRID ═══════════════════════════════════════════════════════ -->
-<section id="services" class="gl-reveal" style="padding:100px 0;background:#F7F6F2;">
-<div class="gl-container" style="max-width:1440px;margin:0 auto;padding:0 64px;">
+<style>
+@media(max-width:768px){
+  #hero-content{padding:0 24px !important;}
+}
+</style>
 
-    <!-- Section header -->
-    <div style="text-align:center;margin-bottom:64px;">
-        <div class="gl-ornament" style="display:flex;align-items:center;gap:16px;margin-bottom:20px;justify-content:center;">
-            <div style="flex:1;max-width:80px;height:1px;background:linear-gradient(90deg,transparent,rgba(198,167,94,0.5));"></div>
-            <span style="font-size:0.625rem;font-weight:600;letter-spacing:0.14em;color:#C6A75E;text-transform:uppercase;">What We Offer</span>
-            <div style="flex:1;max-width:80px;height:1px;background:linear-gradient(90deg,rgba(198,167,94,0.5),transparent);"></div>
+<!-- ════════════════════════════════════════════════════════════
+     2. STATS STRIP
+════════════════════════════════════════════════════════════ -->
+<section class="gl-reveal" style="background:#fff;border-top:1px solid rgba(0,0,0,0.05);border-bottom:1px solid rgba(0,0,0,0.05);">
+  <div class="gl-container" style="padding-top:0;padding-bottom:0;">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);">
+      <?php foreach ($stats as $i => $s): ?>
+      <div style="padding:40px 24px;text-align:center;<?php echo $i < count($stats) - 1 ? 'border-right:1px solid rgba(0,0,0,0.06);' : ''; ?>">
+        <div style="font-family:'Playfair Display',serif;font-size:2.25rem;font-weight:700;color:var(--gold);line-height:1;margin-bottom:6px;"><?php echo esc_html($s['num']); ?></div>
+        <div style="font-size:0.8125rem;color:var(--text-secondary);letter-spacing:0.03em;"><?php echo esc_html($s['label']); ?></div>
+      </div>
+      <?php
+endforeach; ?>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     3. SERVICES — LEAN SINGLE ROW
+════════════════════════════════════════════════════════════ -->
+<section id="services" class="gl-reveal gl-section" style="background:var(--off-white);">
+  <div class="gl-container">
+
+    <!-- Header row -->
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:40px;flex-wrap:wrap;gap:16px;">
+      <div>
+        <div class="gl-ornament" style="justify-content:flex-start;margin-bottom:12px;">
+          <div class="gl-ornament-line" style="max-width:40px;"></div>
+          <span class="gl-ornament-label">What We Offer</span>
         </div>
-        <h2 style="font-family:'Playfair Display',serif;font-size:clamp(2rem,3.5vw,3rem);font-weight:700;color:#121212;letter-spacing:-0.02em;margin-bottom:16px;">Luxury Services</h2>
-        <p style="font-size:1rem;color:#6A6A6A;max-width:480px;margin:0 auto;">Curated beauty rituals delivered with surgical precision and artistic soul.</p>
+        <h2 class="gl-section-title" style="margin-bottom:0;">Luxury Services</h2>
+        <p style="font-size:0.9375rem;color:var(--text-secondary);margin-top:10px;max-width:400px;line-height:1.65;">Curated beauty rituals delivered with surgical precision and artistic soul.</p>
+      </div>
+      <a href="<?php echo esc_url(home_url('/#services')); ?>" style="display:inline-flex;align-items:center;gap:8px;font-size:0.8125rem;font-weight:600;color:var(--gold);white-space:nowrap;letter-spacing:0.02em;">
+        View all services
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
     </div>
 
-    <!-- Skeleton placeholders (shown until services load) -->
-    <div id="services-skeleton" style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;">
-        <?php for ($s = 0; $s < 6; $s++): ?>
-        <div class="gl-skeleton-card" style="background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.05);">
-            <div class="gl-skeleton" style="background:#EAEAEA;height:220px;width:100%;position:relative;overflow:hidden;border-radius:0;"></div>
-            <div style="padding:24px;">
-                <div class="gl-skeleton" style="height:14px;width:70%;margin-bottom:10px;border-radius:6px;"></div>
-                <div class="gl-skeleton" style="height:12px;width:90%;margin-bottom:6px;border-radius:6px;"></div>
-                <div class="gl-skeleton" style="height:12px;width:65%;margin-bottom:20px;border-radius:6px;"></div>
-                <div class="gl-skeleton" style="height:14px;width:35%;border-radius:6px;"></div>
-            </div>
-        </div>
-        <?php
-endfor; ?>
-    </div>
-
-    <!-- Real services grid -->
-    <div id="services-grid" style="display:none;grid-template-columns:repeat(3,1fr);gap:24px;">
-        <?php foreach ($services as $svc):
+    <!-- Lean horizontal row -->
+    <div class="gl-services-scroll" id="gl-services-row">
+      <?php foreach ($services as $svc):
     $name = $svc['name'] ?? $svc['post_title'] ?? 'Service';
     $desc = $svc['description'] ?? $svc['post_excerpt'] ?? '';
     $price = $svc['price_display'] ?? (isset($svc['price']) ? '₹' . number_format($svc['price']) : '');
-    $img = $svc['image_url'] ?? get_template_directory_uri() . '/assets/images/service-placeholder.jpg';
+    $icon = $svc['icon'] ?? '✦';
 ?>
-        <article class="gl-card" style="background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.05);transition:transform 320ms cubic-bezier(0.4,0,0.2,1),box-shadow 320ms cubic-bezier(0.4,0,0.2,1),border-color 320ms cubic-bezier(0.4,0,0.2,1);"
-                 onmouseover="this.style.transform='translateY(-8px)';this.style.boxShadow='0 20px 48px rgba(0,0,0,0.10),0 0 0 1px rgba(198,167,94,0.25)';this.style.borderColor='rgba(198,167,94,0.30)';this.querySelector('.svc-img').style.transform='scale(1.06)'"
-                 onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(0,0,0,0.05)';this.style.borderColor='rgba(0,0,0,0.05)';this.querySelector('.svc-img').style.transform='scale(1)'">
-            <div style="overflow:hidden;height:220px;">
-                <img class="svc-img" src="<?php echo esc_url($img); ?>" alt="<?php echo esc_attr($name); ?>"
-                     loading="lazy" decoding="async"
-                     style="width:100%;height:220px;object-fit:cover;transition:transform 500ms cubic-bezier(0.4,0,0.2,1);"
-                     onerror="this.src='https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=300&fit=crop'">
-            </div>
-            <div style="padding:28px;">
-                <h3 style="font-family:'Playfair Display',serif;font-size:1.125rem;font-weight:700;color:#121212;margin-bottom:8px;"><?php echo esc_html($name); ?></h3>
-                <p style="font-size:0.875rem;color:#6A6A6A;line-height:1.65;margin-bottom:16px;"><?php echo esc_html(wp_trim_words($desc, 14, '…')); ?></p>
-                <?php if ($price): ?>
-                <span style="font-family:'Playfair Display',serif;font-size:1.125rem;font-weight:600;color:#C6A75E;"><?php echo esc_html($price); ?></span>
-                <?php
+      <div class="gl-service-card" onclick="glamluxOpenModal('booking')">
+        <div class="gl-service-icon"><?php echo $icon; ?></div>
+        <h3 style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--dark);margin-bottom:8px;line-height:1.3;"><?php echo esc_html($name); ?></h3>
+        <p style="font-size:0.8125rem;color:var(--text-secondary);line-height:1.65;margin-bottom:16px;"><?php echo esc_html(wp_trim_words($desc, 12, '…')); ?></p>
+        <?php if ($price): ?>
+        <div style="font-size:0.8125rem;font-weight:600;color:var(--gold);"><?php echo esc_html($price); ?></div>
+        <?php
     endif; ?>
-            </div>
-        </article>
-        <?php
+      </div>
+      <?php
 endforeach; ?>
     </div>
 
-</div>
+    <!-- Scroll indicator dots -->
+    <div style="display:flex;justify-content:center;gap:6px;margin-top:24px;" id="services-dots">
+      <?php for ($i = 0; $i < count($services); $i++): ?>
+      <div class="svc-dot" data-idx="<?php echo $i; ?>" style="width:<?php echo $i === 0 ? '20' : '6'; ?>px;height:6px;border-radius:9999px;background:<?php echo $i === 0 ? 'var(--gold)' : 'rgba(0,0,0,0.12)'; ?>;transition:all 0.3s ease;cursor:pointer;"></div>
+      <?php
+endfor; ?>
+    </div>
+
+  </div>
 </section>
 
-<!-- ══ 3.5. SALONS SHOWCASE ════════════════════════════════════════════════════ -->
+<!-- ════════════════════════════════════════════════════════════
+     4. SALONS SHOWCASE
+════════════════════════════════════════════════════════════ -->
 <?php if (!empty($salons)): ?>
-<section id="salons" class="gl-reveal" style="padding:100px 0;background:#fff;">
-<div class="gl-container" style="max-width:1440px;margin:0 auto;padding:0 64px;">
-    <div style="text-align:center;margin-bottom:64px;">
-        <div class="gl-ornament" style="display:flex;align-items:center;gap:16px;margin-bottom:20px;justify-content:center;">
-            <div style="flex:1;max-width:80px;height:1px;background:linear-gradient(90deg,transparent,rgba(198,167,94,0.5));"></div>
-            <span style="font-size:0.625rem;font-weight:600;letter-spacing:0.14em;color:#C6A75E;text-transform:uppercase;">Our Locations</span>
-            <div style="flex:1;max-width:80px;height:1px;background:linear-gradient(90deg,rgba(198,167,94,0.5),transparent);"></div>
-        </div>
-        <h2 style="font-family:'Playfair Display',serif;font-size:clamp(2rem,3.5vw,3rem);font-weight:700;color:#121212;letter-spacing:-0.02em;margin-bottom:16px;">Luxury Salons</h2>
+<div class="gl-divider"></div>
+<section id="salons" class="gl-reveal gl-section" style="background:#fff;">
+  <div class="gl-container">
+
+    <div style="text-align:center;margin-bottom:52px;">
+      <div class="gl-ornament"><div class="gl-ornament-line"></div><span class="gl-ornament-label">Our Locations</span><div class="gl-ornament-line r"></div></div>
+      <h2 class="gl-section-title">Luxury Salons</h2>
+      <p class="gl-section-sub">Flagship destinations across India's most prestigious neighbourhoods.</p>
     </div>
 
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;">
-        <?php foreach ($salons as $salon): ?>
-        <article class="gl-card" style="background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.05);">
-            <div style="overflow:hidden;height:240px;">
-                <img src="<?php echo esc_url($salon['image_url'] ?? 'https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f'); ?>" alt="<?php echo esc_attr($salon['name']); ?>" style="width:100%;height:100%;object-fit:cover;">
-            </div>
-            <div style="padding:28px;">
-                <h3 style="font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;color:#121212;margin-bottom:8px;"><?php echo esc_html($salon['name']); ?></h3>
-                <p style="font-size:0.875rem;color:#6A6A6A;margin-bottom:4px;">📍 <?php echo esc_html($salon['address'] ?? ''); ?></p>
-            </div>
-        </article>
-        <?php
+    <div class="gl-salons-grid">
+      <?php foreach (array_slice($salons, 0, 6) as $salon): ?>
+      <article class="gl-card">
+        <div style="overflow:hidden;height:220px;position:relative;">
+          <img src="<?php echo esc_url($salon['image_url'] ?? 'https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=600&h=400&fit=crop&q=80'); ?>"
+               alt="<?php echo esc_attr($salon['name']); ?>"
+               loading="lazy" decoding="async"
+               style="width:100%;height:100%;object-fit:cover;transition:transform 0.5s cubic-bezier(0.4,0,0.2,1);"
+               onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'"
+               onerror="this.src='https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600&h=400&fit=crop&q=80'">
+          <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(15,15,15,0.35),transparent);pointer-events:none;"></div>
+        </div>
+        <div style="padding:24px 26px;">
+          <h3 style="font-family:'Playfair Display',serif;font-size:1.125rem;font-weight:700;color:var(--dark);margin-bottom:6px;"><?php echo esc_html($salon['name']); ?></h3>
+          <p style="font-size:0.8375rem;color:var(--text-secondary);display:flex;align-items:center;gap:6px;">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="flex-shrink:0;"><path d="M6 1C4.07 1 2.5 2.57 2.5 4.5c0 2.8 3.5 6.5 3.5 6.5s3.5-3.7 3.5-6.5C9.5 2.57 7.93 1 6 1zm0 4.75a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5z" fill="currentColor"/></svg>
+            <?php echo esc_html($salon['address'] ?? ''); ?>
+          </p>
+        </div>
+      </article>
+      <?php
     endforeach; ?>
     </div>
-</div>
+
+    <div style="text-align:center;margin-top:44px;">
+      <a href="<?php echo esc_url(home_url('/salons')); ?>" class="gl-btn-ghost">
+        Explore All Salons
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+
+  </div>
 </section>
 <?php
 endif; ?>
 
-<!-- ══ 3.6. MEET THE TEAM ══════════════════════════════════════════════════════ -->
+<!-- ════════════════════════════════════════════════════════════
+     5. MEET THE TEAM
+════════════════════════════════════════════════════════════ -->
 <?php if (!empty($staff)): ?>
-<section id="team" class="gl-reveal" style="padding:100px 0;background:#F7F6F2;">
-<div class="gl-container" style="max-width:1440px;margin:0 auto;padding:0 64px;">
-    <div style="text-align:center;margin-bottom:64px;">
-        <h2 style="font-family:'Playfair Display',serif;font-size:clamp(2rem,3.5vw,3rem);font-weight:700;color:#121212;letter-spacing:-0.02em;margin-bottom:16px;">Meet Our Artisans</h2>
+<div class="gl-divider"></div>
+<section id="team" class="gl-reveal gl-section" style="background:var(--off-white);">
+  <div class="gl-container">
+
+    <div style="text-align:center;margin-bottom:52px;">
+      <div class="gl-ornament"><div class="gl-ornament-line"></div><span class="gl-ornament-label">The Artisans</span><div class="gl-ornament-line r"></div></div>
+      <h2 class="gl-section-title">Meet Our Experts</h2>
+      <p class="gl-section-sub">Hand-picked master artists trained in luxury beauty techniques from around the world.</p>
     </div>
 
-    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:24px;">
-        <?php foreach ($staff as $person): ?>
-        <article style="text-align:center;">
-            <div style="width:120px;height:120px;border-radius:50%;overflow:hidden;margin:0 auto 16px;box-shadow:0 8px 24px rgba(0,0,0,0.1);">
-                <img src="<?php echo esc_url($person['image_url'] ?? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2'); ?>" alt="<?php echo esc_attr($person['full_name']); ?>" style="width:100%;height:100%;object-fit:cover;">
-            </div>
-            <h3 style="font-family:'Playfair Display',serif;font-size:1.125rem;font-weight:700;color:#121212;margin-bottom:4px;"><?php echo esc_html($person['full_name']); ?></h3>
-            <p style="font-size:0.75rem;color:#C6A75E;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;margin-bottom:4px;"><?php echo esc_html($person['role']); ?></p>
-            <p style="font-size:0.75rem;color:#6A6A6A;"><?php echo esc_html($person['salon_name']); ?></p>
-        </article>
-        <?php
+    <div class="gl-team-grid">
+      <?php foreach (array_slice($staff, 0, 6) as $person): ?>
+      <article style="text-align:center;">
+        <div style="width:108px;height:108px;border-radius:50%;overflow:hidden;margin:0 auto 14px;border:2px solid rgba(198,167,94,0.20);box-shadow:0 8px 24px rgba(0,0,0,0.08);">
+          <img src="<?php echo esc_url($person['image_url'] ?? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop&q=80'); ?>"
+               alt="<?php echo esc_attr($person['full_name'] ?? ''); ?>"
+               loading="lazy" decoding="async"
+               style="width:100%;height:100%;object-fit:cover;"
+               onerror="this.src='https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&q=80'">
+        </div>
+        <h3 style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--dark);margin-bottom:3px;"><?php echo esc_html($person['full_name'] ?? ''); ?></h3>
+        <p style="font-size:0.6875rem;color:var(--gold);text-transform:uppercase;letter-spacing:0.1em;font-weight:600;margin-bottom:3px;"><?php echo esc_html($person['role'] ?? ''); ?></p>
+        <p style="font-size:0.75rem;color:var(--text-muted);"><?php echo esc_html($person['salon_name'] ?? ''); ?></p>
+      </article>
+      <?php
     endforeach; ?>
     </div>
-</div>
-</section>
-</div>
+
+    <div style="text-align:center;margin-top:44px;">
+      <a href="<?php echo esc_url(home_url('/team')); ?>" class="gl-btn-ghost">
+        Meet the Full Team
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+
+  </div>
 </section>
 <?php
 endif; ?>
 
-<!-- ══ 3.7. MEMBERSHIP PLANS ═══════════════════════════════════════════════════ -->
+<!-- ════════════════════════════════════════════════════════════
+     6. MEMBERSHIP PLANS
+════════════════════════════════════════════════════════════ -->
 <?php if (!empty($memberships)): ?>
-<section id="memberships" class="gl-reveal" style="padding:100px 0;background:#fff;">
-<div class="gl-container" style="max-width:1440px;margin:0 auto;padding:0 64px;">
-    <div style="text-align:center;margin-bottom:64px;">
-        <div class="gl-ornament" style="display:flex;align-items:center;gap:16px;margin-bottom:20px;justify-content:center;">
-            <div style="flex:1;max-width:80px;height:1px;background:linear-gradient(90deg,transparent,rgba(198,167,94,0.5));"></div>
-            <span style="font-size:0.625rem;font-weight:600;letter-spacing:0.14em;color:#C6A75E;text-transform:uppercase;">Exclusive Access</span>
-            <div style="flex:1;max-width:80px;height:1px;background:linear-gradient(90deg,rgba(198,167,94,0.5),transparent);"></div>
-        </div>
-        <h2 style="font-family:'Playfair Display',serif;font-size:clamp(2rem,3.5vw,3rem);font-weight:700;color:#121212;letter-spacing:-0.02em;margin-bottom:16px;">Privilege Memberships</h2>
+<div class="gl-divider"></div>
+<section id="memberships" class="gl-reveal gl-section" style="background:#fff;">
+  <div class="gl-container">
+
+    <div style="text-align:center;margin-bottom:52px;">
+      <div class="gl-ornament"><div class="gl-ornament-line"></div><span class="gl-ornament-label">Exclusive Access</span><div class="gl-ornament-line r"></div></div>
+      <h2 class="gl-section-title">Privilege Memberships</h2>
+      <p class="gl-section-sub">Unlock premium benefits, priority booking, and personalised luxury experiences.</p>
     </div>
 
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:32px;">
-        <?php foreach ($memberships as $index => $plan):
-        $is_center = ($index === 1); // Highlight the middle tier
+    <div class="gl-membership-grid">
+      <?php foreach ($memberships as $idx => $plan):
+        $featured = ($idx === 1);
 ?>
-        <article class="gl-card" style="background:<?php echo $is_center ? '#121212' : '#F7F6F2'; ?>;color:<?php echo $is_center ? '#fff' : '#121212'; ?>;border-radius:24px;padding:40px;position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.08);border:1px solid rgba(198,167,94,<?php echo $is_center ? '0.3' : '0.1'; ?>);transform:<?php echo $is_center ? 'scale(1.05)' : 'scale(1)'; ?>;z-index:<?php echo $is_center ? '2' : '1'; ?>;">
-            <?php if ($is_center): ?>
-            <div style="position:absolute;top:16px;right:16px;background:#C6A75E;color:#fff;font-size:0.625rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:6px 12px;border-radius:100px;">Most Popular</div>
-            <?php
+      <article style="
+        background:<?php echo $featured ? 'var(--dark)' : '#fff'; ?>;
+        color:<?php echo $featured ? '#fff' : 'var(--dark)'; ?>;
+        border-radius:var(--radius-xl);padding:40px 36px;
+        position:relative;overflow:hidden;
+        border:1px solid <?php echo $featured ? 'rgba(198,167,94,0.28)' : 'rgba(0,0,0,0.06)'; ?>;
+        box-shadow:<?php echo $featured ? '0 24px 64px rgba(198,167,94,0.18),0 8px 32px rgba(0,0,0,0.16)' : 'var(--shadow-card)'; ?>;
+        transform:<?php echo $featured ? 'scale(1.04)' : 'scale(1)'; ?>;
+        z-index:<?php echo $featured ? '2' : '1'; ?>;
+        transition:transform var(--transition-base),box-shadow var(--transition-base);
+      ">
+        <?php if ($featured): ?>
+        <div style="position:absolute;top:18px;right:18px;background:var(--gold);color:#fff;font-size:0.5625rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:5px 12px;border-radius:9999px;">Most Popular</div>
+        <?php
         endif; ?>
-            
-            <h3 style="font-family:'Playfair Display',serif;font-size:1.75rem;font-weight:700;margin-bottom:16px;"><?php echo esc_html($plan['tier_name']); ?></h3>
-            <div style="font-size:2.5rem;font-weight:700;font-family:'Playfair Display',serif;color:#C6A75E;margin-bottom:24px;">₹<?php echo esc_html(number_format($plan['price_monthly'])); ?><span style="font-size:1rem;color:<?php echo $is_center ? 'rgba(255,255,255,0.6)' : '#6A6A6A'; ?>;font-weight:400;font-family:'Inter',sans-serif;">/mo</span></div>
-            
-            <p style="font-size:0.875rem;line-height:1.6;color:<?php echo $is_center ? 'rgba(255,255,255,0.8)' : '#6A6A6A'; ?>;margin-bottom:32px;"><?php echo wp_kses_post(nl2br($plan['benefits'])); ?></p>
-            
-            <a href="#" class="gl-btn" style="display:block;text-align:center;width:100%;padding:14px;background:<?php echo $is_center ? '#C6A75E' : 'transparent'; ?>;color:<?php echo $is_center ? '#fff' : '#121212'; ?>;border:1px solid <?php echo $is_center ? '#C6A75E' : '#121212'; ?>;border-radius:100px;font-size:0.875rem;font-weight:600;text-decoration:none;transition:all 0.3s ease;">Join Now</a>
-        </article>
-        <?php
+        <!-- Gold accent line -->
+        <div style="width:32px;height:2px;background:var(--gold);border-radius:2px;margin-bottom:24px;"></div>
+        <h3 style="font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;margin-bottom:14px;"><?php echo esc_html($plan['tier_name']); ?></h3>
+        <div style="font-family:'Playfair Display',serif;font-size:2.5rem;font-weight:700;color:var(--gold);margin-bottom:8px;line-height:1;">
+          ₹<?php echo esc_html(number_format($plan['price_monthly'])); ?>
+          <span style="font-size:0.9375rem;color:<?php echo $featured ? 'rgba(255,255,255,0.45)' : 'var(--text-muted)'; ?>;font-weight:400;font-family:'Inter',sans-serif;">/month</span>
+        </div>
+        <p style="font-size:0.875rem;line-height:1.7;color:<?php echo $featured ? 'rgba(255,255,255,0.65)' : 'var(--text-secondary)'; ?>;margin-bottom:32px;"><?php echo wp_kses_post(nl2br($plan['benefits'])); ?></p>
+        <a href="<?php echo esc_url(home_url('/memberships')); ?>" style="
+          display:block;text-align:center;padding:14px;
+          background:<?php echo $featured ? 'var(--gold)' : 'transparent'; ?>;
+          color:<?php echo $featured ? '#fff' : 'var(--dark)'; ?>;
+          border:1.5px solid <?php echo $featured ? 'var(--gold)' : 'rgba(0,0,0,0.16)'; ?>;
+          border-radius:9999px;font-size:0.875rem;font-weight:600;letter-spacing:0.03em;
+          text-decoration:none;transition:all var(--transition-fast);
+        " onmouseover="this.style.background='<?php echo $featured ? '#A8893E' : 'var(--dark)'; ?>';this.style.color='#fff';this.style.borderColor='<?php echo $featured ? '#A8893E' : 'var(--dark)'; ?>'"
+           onmouseout="this.style.background='<?php echo $featured ? 'var(--gold)' : 'transparent'; ?>';this.style.color='<?php echo $featured ? '#fff' : 'var(--dark)'; ?>';this.style.borderColor='<?php echo $featured ? 'var(--gold)' : 'rgba(0,0,0,0.16)'; ?>'">
+          Join Now
+        </a>
+      </article>
+      <?php
     endforeach; ?>
     </div>
-</div>
+
+  </div>
 </section>
 <?php
 endif; ?>
 
-<!-- ══ 3.8. TRANSFORMATION GALLERY ═════════════════════════════════════════════ -->
-<?php if (!empty($service_logs)): ?>
-<section id="gallery" class="gl-reveal" style="padding:100px 0;background:#121212;color:#fff;">
-<div class="gl-container" style="max-width:1440px;margin:0 auto;padding:0 64px;">
-    <div style="text-align:center;margin-bottom:64px;">
-        <h2 style="font-family:'Playfair Display',serif;font-size:clamp(2rem,3.5vw,3rem);font-weight:700;color:#fff;letter-spacing:-0.02em;margin-bottom:16px;">The GlamLux2Lux Signature</h2>
-        <p style="font-size:1rem;color:rgba(255,255,255,0.7);max-width:480px;margin:0 auto;">Witness the artistry. Real client transformations driven by our experts.</p>
+<!-- ════════════════════════════════════════════════════════════
+     7. TESTIMONIALS
+════════════════════════════════════════════════════════════ -->
+<div class="gl-divider"></div>
+<section class="gl-reveal gl-section" style="background:var(--off-white);">
+  <div class="gl-container">
+
+    <div style="text-align:center;margin-bottom:52px;">
+      <div class="gl-ornament"><div class="gl-ornament-line"></div><span class="gl-ornament-label">Client Voices</span><div class="gl-ornament-line r"></div></div>
+      <h2 class="gl-section-title">Trusted by Thousands</h2>
     </div>
 
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;">
-        <?php foreach ($service_logs as $log): ?>
-        <article style="position:relative;border-radius:16px;overflow:hidden;background:#1e1a14;">
-            <div style="display:flex;height:260px;">
-                <div style="flex:1;position:relative;border-right:1px solid rgba(255,255,255,0.1);">
-                    <img src="<?php echo esc_url($log['before_image_url']); ?>" alt="Before" style="width:100%;height:100%;object-fit:cover;opacity:0.8;">
-                    <div style="position:absolute;bottom:12px;left:12px;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);padding:4px 8px;border-radius:4px;font-size:0.625rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;">Before</div>
-                </div>
-                <div style="flex:1;position:relative;">
-                    <img src="<?php echo esc_url($log['after_image_url']); ?>" alt="After" style="width:100%;height:100%;object-fit:cover;">
-                    <div style="position:absolute;bottom:12px;right:12px;background:#C6A75E;color:#000;padding:4px 8px;border-radius:4px;font-size:0.625rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">After</div>
-                </div>
-            </div>
-            <div style="padding:16px 20px;text-align:center;">
-                <h4 style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:#C6A75E;margin:0;"><?php echo esc_html($log['service_name']); ?></h4>
-            </div>
-        </article>
-        <?php
-    endforeach; ?>
-    </div>
-</div>
-</section>
-<?php
-endif; ?>
-
-<!-- ══ 4. TESTIMONIALS ════════════════════════════════════════════════════════ -->
-<section class="gl-reveal" style="background:#fff;padding:96px 0;">
-<div style="max-width:1440px;margin:0 auto;padding:0 64px;">
-
-    <div style="text-align:center;margin-bottom:56px;">
-        <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;justify-content:center;">
-            <div style="flex:1;max-width:80px;height:1px;background:linear-gradient(90deg,transparent,rgba(198,167,94,0.5));"></div>
-            <span style="font-size:0.625rem;font-weight:600;letter-spacing:0.14em;color:#C6A75E;text-transform:uppercase;">Client Voices</span>
-            <div style="flex:1;max-width:80px;height:1px;background:linear-gradient(90deg,rgba(198,167,94,0.5),transparent);"></div>
+    <div class="gl-testimonial-grid">
+      <?php foreach ($testimonials as $t): ?>
+      <div style="background:#fff;border-radius:var(--radius-lg);padding:32px;border:1px solid rgba(0,0,0,0.05);box-shadow:var(--shadow-soft);position:relative;">
+        <div style="position:absolute;top:-12px;left:28px;font-family:'Cormorant Garamond',serif;font-size:3.5rem;color:var(--gold);line-height:1;opacity:0.4;">"</div>
+        <p style="font-family:'Cormorant Garamond',serif;font-size:1.0625rem;font-style:italic;line-height:1.8;color:var(--dark);margin-bottom:22px;padding-top:14px;"><?php echo esc_html($t['text']); ?></p>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:32px;height:1px;background:var(--gold);"></div>
+          <div>
+            <div style="font-size:0.8125rem;font-weight:600;color:var(--dark);"><?php echo esc_html($t['author']); ?></div>
+            <div style="font-size:0.75rem;color:var(--text-muted);"><?php echo esc_html($t['location']); ?></div>
+          </div>
         </div>
-        <h2 style="font-family:'Playfair Display',serif;font-size:clamp(1.75rem,3vw,2.5rem);font-weight:700;color:#121212;letter-spacing:-0.02em;">Trusted by Thousands</h2>
-    </div>
-
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;">
-        <?php foreach ($testimonials as $t): ?>
-        <div class="gl-reveal" style="background:#F7F6F2;border-radius:24px;padding:36px;border-left:3px solid #C6A75E;">
-            <p style="font-family:'Cormorant Garamond',serif;font-size:1.125rem;font-style:italic;line-height:1.75;color:#121212;margin-bottom:24px;">"<?php echo esc_html($t['text']); ?>"</p>
-            <span style="font-size:0.75rem;font-weight:600;color:#6A6A6A;letter-spacing:0.08em;text-transform:uppercase;">— <?php echo esc_html($t['author']); ?></span>
-        </div>
-        <?php
+      </div>
+      <?php
 endforeach; ?>
     </div>
 
-</div>
-</div>
+  </div>
 </section>
 
-<!-- ══ 4.5. FRANCHISE NETWORK ══════════════════════════════════════════════════ -->
+<!-- ════════════════════════════════════════════════════════════
+     8. FRANCHISE NETWORK
+════════════════════════════════════════════════════════════ -->
 <?php if (!empty($franchises)): ?>
-<section id="franchise-network" class="gl-reveal" style="padding:100px 0;background:#F7F6F2;">
-<div class="gl-container" style="max-width:1440px;margin:0 auto;padding:0 64px;">
-    <div style="text-align:center;margin-bottom:64px;">
-        <h2 style="font-family:'Playfair Display',serif;font-size:clamp(2rem,3.5vw,3rem);font-weight:700;color:#121212;letter-spacing:-0.02em;margin-bottom:16px;">Our Expanding Network</h2>
-        <p style="font-size:1rem;color:#6A6A6A;max-width:480px;margin:0 auto;">Join a thriving ecosystem of luxury beauty destinations across India.</p>
+<div class="gl-divider"></div>
+<section id="franchise-network" class="gl-reveal gl-section" style="background:#fff;">
+  <div class="gl-container">
+
+    <div style="text-align:center;margin-bottom:52px;">
+      <div class="gl-ornament"><div class="gl-ornament-line"></div><span class="gl-ornament-label">Our Network</span><div class="gl-ornament-line r"></div></div>
+      <h2 class="gl-section-title">Expanding Everywhere</h2>
+      <p class="gl-section-sub">Join a thriving ecosystem of luxury beauty destinations across India's most vibrant cities.</p>
     </div>
 
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;">
-        <?php foreach ($franchises as $franchise): ?>
-        <article style="background:#fff;border-radius:16px;padding:32px;border:1px solid rgba(0,0,0,0.05);box-shadow:0 8px 24px rgba(0,0,0,0.04);position:relative;">
-            <div style="position:absolute;top:24px;right:24px;background:<?php echo $franchise['status'] === 'active' ? '#e6f4ea' : '#fef7e0'; ?>;color:<?php echo $franchise['status'] === 'active' ? '#137333' : '#b06000'; ?>;padding:4px 12px;border-radius:100px;font-size:0.625rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">
-                <?php echo esc_html($franchise['status']); ?>
-            </div>
-            <h3 style="font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;color:#121212;margin-bottom:12px;padding-right:60px;"><?php echo esc_html($franchise['location']); ?></h3>
-            
-            <div style="margin-bottom:8px;display:flex;align-items:center;gap:8px;">
-                <span style="font-size:1rem;">👤</span>
-                <span style="font-size:0.875rem;color:#6A6A6A;"><?php echo esc_html($franchise['owner_name']); ?></span>
-            </div>
-            
-            <div style="margin-bottom:8px;display:flex;align-items:center;gap:8px;">
-                <span style="font-size:1rem;">✉️</span>
-                <span style="font-size:0.875rem;color:#6A6A6A;"><?php echo esc_html($franchise['email']); ?></span>
-            </div>
-            
-            <?php if (!empty($franchise['phone'])): ?>
-            <div style="display:flex;align-items:center;gap:8px;">
-                <span style="font-size:1rem;">📞</span>
-                <span style="font-size:0.875rem;color:#6A6A6A;"><?php echo esc_html($franchise['phone']); ?></span>
-            </div>
-            <?php
+    <div class="gl-franchise-grid">
+      <?php foreach (array_slice($franchises, 0, 6) as $fr): ?>
+      <article style="background:var(--off-white);border-radius:var(--radius-lg);padding:28px;border:1px solid rgba(0,0,0,0.05);position:relative;transition:transform var(--transition-base),box-shadow var(--transition-base);" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='var(--shadow-card)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div style="position:absolute;top:20px;right:20px;">
+          <span class="gl-badge <?php echo $fr['status'] === 'active' ? 'gl-badge-active' : 'gl-badge-pending'; ?>"><?php echo esc_html($fr['status']); ?></span>
+        </div>
+        <h3 style="font-family:'Playfair Display',serif;font-size:1.125rem;font-weight:700;color:var(--dark);margin-bottom:14px;padding-right:64px;"><?php echo esc_html($fr['location']); ?></h3>
+        <div style="display:flex;flex-direction:column;gap:7px;">
+          <span style="font-size:0.8125rem;color:var(--text-secondary);">👤 <?php echo esc_html($fr['owner_name']); ?></span>
+          <span style="font-size:0.8125rem;color:var(--text-secondary);">✉ <?php echo esc_html($fr['email']); ?></span>
+          <?php if (!empty($fr['phone'])): ?>
+          <span style="font-size:0.8125rem;color:var(--text-secondary);">📞 <?php echo esc_html($fr['phone']); ?></span>
+          <?php
         endif; ?>
-        </article>
-        <?php
+        </div>
+      </article>
+      <?php
     endforeach; ?>
     </div>
-</div>
+
+  </div>
 </section>
 <?php
 endif; ?>
 
-<!-- ══ 5. FRANCHISE CTA SECTION ══════════════════════════════════════════════ -->
-<section class="gl-reveal" style="background:linear-gradient(135deg,#121212 0%,#1e1a14 100%);padding:120px 0;overflow:hidden;position:relative;">
-    <!-- Gold glow -->
-    <div style="position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:800px;height:500px;background:radial-gradient(ellipse,rgba(198,167,94,0.12) 0%,transparent 70%);pointer-events:none;"></div>
+<!-- ════════════════════════════════════════════════════════════
+     9. FRANCHISE CTA
+════════════════════════════════════════════════════════════ -->
+<section class="gl-reveal" style="background:var(--dark);padding:112px 0;position:relative;overflow:hidden;">
+  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(198,167,94,0.10) 0%,transparent 70%);pointer-events:none;"></div>
 
-    <div style="max-width:700px;margin:0 auto;text-align:center;position:relative;z-index:1;padding:0 32px;">
-        <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;justify-content:center;">
-            <div style="flex:1;max-width:60px;height:1px;background:rgba(198,167,94,0.35);"></div>
-            <span style="font-size:0.625rem;font-weight:600;letter-spacing:0.14em;color:#C6A75E;text-transform:uppercase;">Your Opportunity</span>
-            <div style="flex:1;max-width:60px;height:1px;background:rgba(198,167,94,0.35);"></div>
-        </div>
-        <h2 style="font-family:'Playfair Display',serif;font-size:clamp(2rem,4vw,3.25rem);font-weight:700;color:#fff;letter-spacing:-0.025em;margin-bottom:20px;line-height:1.15;">
-            Own a <span style="color:#C6A75E;">GlamLux2Lux</span><br>Franchise
-        </h2>
-        <p style="font-size:1.0625rem;color:rgba(255,255,255,0.65);line-height:1.7;margin-bottom:44px;max-width:500px;margin-left:auto;margin-right:auto;">
-            Join India's fastest-growing luxury beauty franchise network. Enterprise SaaS tools, proven brand,  and full operational support from day one.
-        </p>
-        <a href="<?php echo esc_url(home_url('/franchise/apply')); ?>"
-           style="display:inline-flex;align-items:center;gap:12px;background:#C6A75E;color:#fff;padding:18px 40px;border-radius:9999px;font-size:0.9375rem;font-weight:600;letter-spacing:0.04em;text-decoration:none;box-shadow:0 8px 32px rgba(198,167,94,0.40);animation:gl-pulse-glow 4s ease-in-out infinite;transition:all 200ms ease;"
-           onmouseover="this.style.transform='translateY(-4px) scale(1.02)';this.style.boxShadow='0 16px 48px rgba(198,167,94,0.55)'"
-           onmouseout="this.style.transform='';this.style.boxShadow='0 8px 32px rgba(198,167,94,0.40)'">
-            Apply for Franchise
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3.5 9h11M9 3.5l5.5 5.5-5.5 5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </a>
+  <div style="max-width:680px;margin:0 auto;text-align:center;position:relative;z-index:1;padding:0 32px;">
+    <div class="gl-ornament" style="margin-bottom:22px;">
+      <div style="flex:1;max-width:52px;height:1px;background:rgba(198,167,94,0.28);"></div>
+      <span class="gl-ornament-label">Your Opportunity</span>
+      <div style="flex:1;max-width:52px;height:1px;background:rgba(198,167,94,0.28);"></div>
     </div>
+    <h2 style="font-family:'Playfair Display',serif;font-size:clamp(2rem,4vw,3.25rem);font-weight:700;color:#fff;letter-spacing:-0.025em;margin-bottom:18px;line-height:1.12;">
+      Own a <span style="color:var(--gold);">GlamLux2Lux</span><br>Franchise
+    </h2>
+    <p style="font-size:1.0625rem;color:rgba(255,255,255,0.58);line-height:1.75;margin-bottom:44px;max-width:500px;margin-left:auto;margin-right:auto;">
+      Join India's fastest-growing luxury beauty franchise network. Enterprise SaaS tools, proven brand, and full operational support from day one.
+    </p>
+    <a href="<?php echo esc_url(home_url('/franchise/apply')); ?>" class="gl-btn-gold" style="font-size:0.9375rem;padding:17px 38px;animation:gl-pulse-glow 4s ease-in-out infinite;">
+      Apply for Franchise
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M8 3l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+  </div>
 </section>
 
-<!-- ══ 6. BOOKING MODAL ═══════════════════════════════════════════════════════ -->
-<div id="gl-modal-booking" class="gl-modal-overlay" role="dialog" aria-modal="true" aria-label="Book an Appointment"
-     style="position:fixed;inset:0;background:rgba(0,0,0,0.35);backdrop-filter:blur(6px);z-index:3000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 320ms cubic-bezier(0.4,0,0.2,1);">
-    <div class="gl-modal" style="background:#fff;border-radius:28px;padding:48px;max-width:520px;width:90%;box-shadow:0 24px 64px rgba(0,0,0,0.14);transform:scale(0.93) translateY(20px);transition:transform 320ms cubic-bezier(0.4,0,0.2,1);">
+<!-- ════════════════════════════════════════════════════════════
+     10. BOOKING MODAL
+════════════════════════════════════════════════════════════ -->
+<div id="gl-modal-booking" class="gl-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="booking-modal-title">
+  <div class="gl-modal-inner">
 
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:36px;">
-            <div>
-                <p style="font-size:0.625rem;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#C6A75E;margin-bottom:6px;">Reserve Your Session</p>
-                <h2 style="font-family:'Playfair Display',serif;font-size:1.75rem;font-weight:700;color:#121212;line-height:1.2;">Book an Appointment</h2>
-            </div>
-            <button onclick="glamluxCloseModal('booking')" style="width:36px;height:36px;border-radius:50%;background:#F7F6F2;border:none;cursor:pointer;display:grid;place-items:center;font-size:1.125rem;color:#6A6A6A;transition:background 200ms ease;" onmouseover="this.style.background='#EAEAEA'" onmouseout="this.style.background='#F7F6F2'">✕</button>
-        </div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;">
+      <div>
+        <p style="font-size:0.625rem;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);margin-bottom:6px;">Reserve Your Session</p>
+        <h2 id="booking-modal-title" style="font-family:'Playfair Display',serif;font-size:1.625rem;font-weight:700;color:var(--dark);line-height:1.2;">Book an Appointment</h2>
+      </div>
+      <button onclick="glamluxCloseModal('booking')" aria-label="Close" style="width:34px;height:34px;border-radius:50%;background:var(--off-white);border:none;cursor:pointer;display:grid;place-items:center;color:var(--text-secondary);font-size:1rem;transition:background var(--transition-fast);" onmouseover="this.style.background='var(--off-white-2)'" onmouseout="this.style.background='var(--off-white)'">✕</button>
+    </div>
 
-        <form id="gl-booking-form" novalidate>
-            <?php wp_nonce_field('glamlux_booking', 'glamlux_nonce', true, true); ?>
-            <input type="hidden" name="action" value="glamlux_create_booking">
+    <form id="gl-booking-form" novalidate>
+      <?php wp_nonce_field('glamlux_booking', 'glamlux_nonce', true, true); ?>
+      <input type="hidden" name="action" value="glamlux_create_booking">
 
-            <!-- Service selector -->
-            <div style="margin-bottom:20px;">
-                <label style="display:block;font-size:0.6875rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#6A6A6A;margin-bottom:8px;">Service</label>
-                <select name="service_id" required style="width:100%;background:#F7F6F2;border:1.5px solid #EAEAEA;border-radius:12px;padding:13px 16px;font-size:0.9375rem;color:#121212;font-family:'Inter',sans-serif;outline:none;transition:border-color 200ms ease;appearance:none;" onfocus="this.style.borderColor='#C6A75E'" onblur="this.style.borderColor='#EAEAEA'">
-                    <option value="">Select a service…</option>
-                    <?php foreach ($services as $svc):
+      <div class="gl-field">
+        <label class="gl-label">Service</label>
+        <select name="service_id" required class="gl-input">
+          <option value="">Select a service…</option>
+          <?php foreach ($services as $svc):
     $id = $svc['id'] ?? $svc['ID'] ?? '';
     $name = $svc['name'] ?? $svc['post_title'] ?? '';
 ?>
-                    <option value="<?php echo esc_attr($id); ?>"><?php echo esc_html($name); ?></option>
-                    <?php
+          <option value="<?php echo esc_attr($id); ?>"><?php echo esc_html($name); ?></option>
+          <?php
 endforeach; ?>
-                </select>
-            </div>
+        </select>
+      </div>
 
-            <!-- Date / Time -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
-                <div>
-                    <label style="display:block;font-size:0.6875rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#6A6A6A;margin-bottom:8px;">Date</label>
-                    <input type="date" name="appointment_date" required min="<?php echo esc_attr(date('Y-m-d')); ?>"
-                           style="width:100%;background:#F7F6F2;border:1.5px solid #EAEAEA;border-radius:12px;padding:13px 16px;font-size:0.9375rem;color:#121212;font-family:'Inter',sans-serif;outline:none;transition:border-color 200ms ease;" onfocus="this.style.borderColor='#C6A75E'" onblur="this.style.borderColor='#EAEAEA'">
-                </div>
-                <div>
-                    <label style="display:block;font-size:0.6875rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#6A6A6A;margin-bottom:8px;">Time</label>
-                    <select name="appointment_time" required style="width:100%;background:#F7F6F2;border:1.5px solid #EAEAEA;border-radius:12px;padding:13px 16px;font-size:0.9375rem;color:#121212;font-family:'Inter',sans-serif;outline:none;appearance:none;transition:border-color 200ms ease;" onfocus="this.style.borderColor='#C6A75E'" onblur="this.style.borderColor='#EAEAEA'">
-                        <?php for ($h = 9; $h <= 20; $h++): ?>
-                        <option value="<?php echo sprintf('%02d:00', $h); ?>"><?php echo sprintf('%02d:00 %s', $h > 12 ? $h - 12 : $h, $h >= 12 ? 'PM' : 'AM'); ?></option>
-                        <?php
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
+        <div>
+          <label class="gl-label">Date</label>
+          <input type="date" name="appointment_date" required min="<?php echo esc_attr(date('Y-m-d')); ?>" class="gl-input">
+        </div>
+        <div>
+          <label class="gl-label">Time</label>
+          <select name="appointment_time" required class="gl-input">
+            <?php for ($h = 9; $h <= 20; $h++): ?>
+            <option value="<?php echo sprintf('%02d:00', $h); ?>"><?php echo sprintf('%02d:00 %s', $h > 12 ? $h - 12 : $h, $h >= 12 ? 'PM' : 'AM'); ?></option>
+            <?php
 endfor; ?>
-                    </select>
-                </div>
-            </div>
+          </select>
+        </div>
+      </div>
 
-            <!-- Name -->
-            <div style="margin-bottom:20px;">
-                <label style="display:block;font-size:0.6875rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#6A6A6A;margin-bottom:8px;">Full Name</label>
-                <input type="text" name="client_name" placeholder="Your name" required
-                       style="width:100%;background:#F7F6F2;border:1.5px solid #EAEAEA;border-radius:12px;padding:13px 16px;font-size:0.9375rem;color:#121212;font-family:'Inter',sans-serif;outline:none;transition:border-color 200ms ease;" onfocus="this.style.borderColor='#C6A75E'" onblur="this.style.borderColor='#EAEAEA'">
-            </div>
+      <div class="gl-field">
+        <label class="gl-label">Full Name</label>
+        <input type="text" name="client_name" placeholder="Your full name" required class="gl-input">
+      </div>
 
-            <!-- Phone -->
-            <div style="margin-bottom:32px;">
-                <label style="display:block;font-size:0.6875rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#6A6A6A;margin-bottom:8px;">Phone</label>
-                <input type="tel" name="phone" placeholder="+91 XXXXX XXXXX" required
-                       style="width:100%;background:#F7F6F2;border:1.5px solid #EAEAEA;border-radius:12px;padding:13px 16px;font-size:0.9375rem;color:#121212;font-family:'Inter',sans-serif;outline:none;transition:border-color 200ms ease;" onfocus="this.style.borderColor='#C6A75E'" onblur="this.style.borderColor='#EAEAEA'">
-            </div>
+      <div class="gl-field" style="margin-bottom:28px;">
+        <label class="gl-label">Phone</label>
+        <input type="tel" name="phone" placeholder="+91 XXXXX XXXXX" required class="gl-input">
+      </div>
 
-            <button type="submit" id="gl-book-submit"
-                    style="width:100%;background:#C6A75E;color:#fff;padding:16px 24px;border-radius:9999px;font-size:0.9375rem;font-weight:600;letter-spacing:0.04em;border:none;cursor:pointer;box-shadow:0 6px 20px rgba(198,167,94,0.35);transition:all 200ms ease;"
-                    onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 10px 28px rgba(198,167,94,0.50)'"
-                    onmouseout="this.style.transform='';this.style.boxShadow='0 6px 20px rgba(198,167,94,0.35)'">
-                Confirm Appointment
-            </button>
+      <button type="submit" id="gl-book-submit" class="gl-btn-gold" style="width:100%;justify-content:center;font-size:0.9375rem;padding:16px;">
+        Confirm Appointment
+      </button>
+    </form>
 
-        </form>
-    </div>
+  </div>
 </div>
 
 <?php get_footer(); ?>

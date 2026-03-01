@@ -1,18 +1,18 @@
 <!-- ══ FOOTER — GlamLux2Lux Premium ══════════════════════════════════════════ -->
-<footer style="background:#121212;padding:80px 64px 48px;border-top:1px solid rgba(255,255,255,0.06);">
-<div style="max-width:1440px;margin:0 auto;">
+<footer style="background:#0F0F0F;padding:80px 56px 48px;border-top:1px solid rgba(255,255,255,0.06);">
+<div style="max-width:1320px;margin:0 auto;">
 
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:64px;margin-bottom:64px;flex-wrap:wrap;">
 
         <!-- Brand column -->
         <div style="max-width:300px;">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
-                <div style="width:38px;height:38px;background:linear-gradient(135deg,#C6A75E,#D4B97A);border-radius:8px;display:grid;place-items:center;">
-                    <span style="font-family:'Playfair Display',serif;font-weight:700;color:#fff;font-size:1rem;">G</span>
+            <div style="display:flex;align-items:center;gap:11px;margin-bottom:20px;">
+                <div style="width:36px;height:36px;background:linear-gradient(135deg,#C6A75E,#D4B97A);border-radius:8px;display:grid;place-items:center;">
+                    <span style="font-family:'Playfair Display',serif;font-weight:700;color:#fff;font-size:0.9375rem;">G</span>
                 </div>
-                <span style="font-family:'Playfair Display',serif;font-weight:700;font-size:1.125rem;color:#fff;letter-spacing:-0.01em;">GlamLux<span style="color:#C6A75E;">2</span>Lux</span>
+                <span style="font-family:'Playfair Display',serif;font-weight:700;font-size:1.0625rem;color:#fff;letter-spacing:-0.01em;">GlamLux<span style="color:#C6A75E;">2</span>Lux</span>
             </div>
-            <p style="font-size:0.875rem;color:rgba(255,255,255,0.45);line-height:1.75;margin-bottom:24px;">The intersection of luxury beauty and enterprise technology. Elevating every salon. Empowering every franchise.</p>
+            <p style="font-size:0.875rem;color:rgba(255,255,255,0.42);line-height:1.75;margin-bottom:24px;">The intersection of luxury beauty and enterprise technology. Elevating every salon. Empowering every franchise.</p>
             <!-- Social -->
             <div style="display:flex;gap:12px;">
                 <?php foreach (['instagram', 'linkedin', 'twitter'] as $net): ?>
