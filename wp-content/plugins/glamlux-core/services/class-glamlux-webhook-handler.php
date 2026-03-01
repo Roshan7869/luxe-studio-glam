@@ -1,15 +1,30 @@
 <?php
+
+/**
+ * Handles incoming payment webhook events from Razorpay and Stripe.
+ * Class dependency is intentionally un-type-hinted to avoid Fatal Errors
+ * if the autoloader resolves the Repo class after this file is parsed.
+ */
 class GlamLux_Webhook_Handler
 {
     private $gateways = [];
     private $dispatcher;
     private $repo;
 
-    public function __construct($d = null, GlamLux_Repo_Webhook $repo = null)
+    public function __construct($d = null, $repo = null)
     {
         $this->dispatcher = $d;
-        $this->repo = $repo ?: new GlamLux_Repo_Webhook();
+        if ($repo !== null) {
+            $this->repo = $repo;
+        }
+        elseif (class_exists('GlamLux_Repo_Webhook')) {
+            $this->repo = new GlamLux_Repo_Webhook();
+        }
+        else {
+            $this->repo = null;
+        }
     }
+
     public function get_gateway_id()
     {
         return "";
