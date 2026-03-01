@@ -134,6 +134,7 @@ function run_glamlux_core()
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-reports-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-operations-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-gdpr-controller.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-health-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-glamlux-data-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-rest-manager.php';
 

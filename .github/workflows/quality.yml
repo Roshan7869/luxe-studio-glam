@@ -39,3 +39,12 @@ jobs:
 
       - name: Run PHPUnit Tests
         run: vendor/bin/phpunit
+
+      - name: Audit Performance via Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: |
+            https://luxe-studio-glam.up.railway.app/
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+          runs: 3

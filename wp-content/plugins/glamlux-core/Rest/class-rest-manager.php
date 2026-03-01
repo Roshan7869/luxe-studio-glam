@@ -30,8 +30,9 @@ class GlamLux_REST_Manager
 			(new GlamLux_Operations_Controller())->register_routes();
 		}
 
-		// Compliance
+		// Compliance & Observability
 		(new GlamLux_GDPR_Controller())->register_routes();
+		(new GlamLux_Health_Controller())->register_routes();
 
 		// Visual Dataset & Gallery Data
 		(new GlamLux_Data_Controller())->register_routes();
