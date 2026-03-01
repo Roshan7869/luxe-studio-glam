@@ -27,11 +27,23 @@ class GlamLux_Logger
         $file = $dir . 'glamlux-' . $domain . '.log';
 
         $timestamp = current_time('mysql');
-        $context_str = !empty($context) ? ' | Context: ' . wp_json_encode($context) : '';
 
-        $formatted = "[{$timestamp}] [{$level}] {$message}{$context_str}" . PHP_EOL;
-
+        // Phase 4: Structured JSON Logging
+        $log_event = array(
+            'timestamp' => $timestamp,
+            'level' => $level,
+            'domain' => $domain,
+            'message' => $message,
+            'context' => $context
+        );
+        $formatted = wp_json_encode($log_event) . PHP_EOL;
         error_log($formatted, 3, $file);
+
+        // Phase 4: Sentry SDK Forwarding
+        if (in_array($level, array('error', 'warning'), true) && function_exists('\Sentry\captureMessage')) {
+            $sentry_level = $level === 'error' ?\Sentry\Severity::error() : \Sentry\Severity::warning();
+            \Sentry\captureMessage($message, $sentry_level);
+        }
     }
 
     public static function info($message, $context = [], $domain = 'core')

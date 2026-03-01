@@ -106,6 +106,9 @@ function run_glamlux_core()
 {
 
 	// ── STEP 1: Infrastructure & Governance ──────────────────────────────────
+	require_once GLAMLUX_PLUGIN_DIR . 'Core/class-glamlux-sentry.php';
+	GlamLux_Sentry::init();
+
 	require_once GLAMLUX_PLUGIN_DIR . 'Core/class-glamlux-logger.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Core/class-glamlux-schema-health.php';
 	GlamLux_SchemaHealth::init();
