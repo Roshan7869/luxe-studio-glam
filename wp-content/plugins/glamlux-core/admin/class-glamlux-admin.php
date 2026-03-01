@@ -290,7 +290,7 @@ class GlamLux_Admin
 
 		// Razorpay config check
 		if (!get_option('glamlux_razorpay_key_id') && current_user_can('manage_options')) {
-			echo '<div class="notice notice-warning"><p><strong>GlamLux:</strong> Razorpay Key ID is not configured. <a href="' . esc_url(admin_url('admin.php?page=glamlux-settings')) . '">Configure Payment Settings →</a></p></div>';
+			echo '<div class="notice notice-warning"><p><strong>GlamLux:</strong> Razorpay Key ID is not configured. <a href="' . esc_url(admin_url('admin.php?page=glamlux-frontend-settings')) . '">Configure Payment Settings &rarr;</a></p></div>';
 		}
 	}
 
