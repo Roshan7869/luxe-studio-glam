@@ -49,6 +49,10 @@ if ($redis_host && file_exists($redis_dropin)) {
     $redis_pass = getenv('REDIS_PASSWORD') ?: null;
     if ($redis_pass)
         define('WP_REDIS_PASSWORD', $redis_pass);
+
+    // Prevent Redis from evicting core DB payload caches
+    define('WP_REDIS_MAXMEMORY_POLICY', 'noeviction');
+    define('WP_REDIS_MAXMEMORY', '256M');
 }
 else {
     define('WP_CACHE', false);
