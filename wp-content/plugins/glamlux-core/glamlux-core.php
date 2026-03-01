@@ -163,6 +163,7 @@ function run_glamlux_core()
 	require_once GLAMLUX_PLUGIN_DIR . 'repositories/class-glamlux-repo-membership.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'repositories/class-glamlux-repo-gdpr.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'repositories/class-glamlux-repo-operations.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'repositories/class-glamlux-repo-webhook.php';
 
 	// ── STEP 4: Payment Domain (Interface → Concrete Gateways → Handler) ─────
 	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-payment-interface.php';
