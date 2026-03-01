@@ -4,6 +4,7 @@ class GlamLux_REST_Manager
 	public function __construct()
 	{
 		add_filter('rest_pre_dispatch', [$this, 'check_rate_limit'], 10, 3);
+		add_filter('rest_post_dispatch', [$this, 'format_response_envelope'], 10, 3);
 		add_filter('rest_post_dispatch', [$this, 'add_caching_headers'], 10, 3);
 		add_action('rest_api_init', [$this, 'init_controllers']);
 	}
@@ -35,7 +36,29 @@ class GlamLux_REST_Manager
 		(new GlamLux_Health_Controller())->register_routes();
 
 		// Visual Dataset & Gallery Data
-		(new GlamLux_Data_Controller())->register_routes();
+		if (class_exists('GlamLux_Data_Controller')) {
+			(new GlamLux_Data_Controller())->register_routes();
+		}
+
+		// Inventory Domain
+		if (class_exists('GlamLux_Inventory_Controller')) {
+			(new GlamLux_Inventory_Controller())->register_routes();
+		}
+
+		// Membership Domain
+		if (class_exists('GlamLux_Membership_Controller')) {
+			(new GlamLux_Membership_Controller())->register_routes();
+		}
+
+		// Attendance Domain
+		if (class_exists('GlamLux_Attendance_Controller')) {
+			(new GlamLux_Attendance_Controller())->register_routes();
+		}
+
+		// Payroll Domain
+		if (class_exists('GlamLux_Payroll_Controller')) {
+			(new GlamLux_Payroll_Controller())->register_routes();
+		}
 	}
 	public function check_rate_limit($result, $server, $request)
 	{
@@ -72,7 +95,34 @@ class GlamLux_REST_Manager
 	{
 		$route = $request->get_route();
 		if (strpos($route, '/glamlux/v1') === 0 && $request->get_method() === 'GET') {
-			$response->header('Cache-Control', 'public, max-age=900');
+			if ($response instanceof WP_REST_Response) {
+				$response->header('Cache-Control', 'public, max-age=900');
+			}
+		}
+		return $response;
+	}
+
+	public function format_response_envelope($response, $server, $request)
+	{
+		$route = $request->get_route();
+		if (strpos($route, '/glamlux/v1') === 0) {
+			// Phase 3.1: Standardize Envelope
+			if ($response instanceof WP_REST_Response) {
+				$data = $response->get_data();
+				$status = $response->get_status();
+				$is_success = $status >= 200 && $status < 300;
+
+				// Ensure we only format once
+				if (!is_array($data) || (!isset($data['success']) && !isset($data['data']) && !isset($data['errors']))) {
+					$formatted = [
+						'success' => $is_success,
+						'data' => $is_success ? $data : (object)[],
+						'errors' => $is_success ? [] : (is_array($data) ? $data : [$data]),
+						'meta' => (object)[]
+					];
+					$response->set_data($formatted);
+				}
+			}
 		}
 		return $response;
 	}

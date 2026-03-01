@@ -26,6 +26,43 @@ class GlamLux_Activator
 	 */
 	public static function run_db_migrations(): void
 	{
+		// PHASE 0.1: Versioned migrations only
+		if (get_option('glamlux_db_version') === GLAMLUX_DB_VERSION) {
+			return;
+		}
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+		// PHASE 0.2: Duplicate Detection Before UNIQUE Constraint
+		if (self::table_exists($GLOBALS['wpdb']->prefix . 'gl_appointments')) {
+			if (self::detect_appointment_duplicates()) {
+				// Abort migration if duplicates exist to prevent site breakage
+				return;
+			}
+		}
+
+		// PHASE 1.1: Add gl_salon_hours Table
+		if (!self::table_exists($GLOBALS['wpdb']->prefix . 'gl_salon_hours')) {
+			$charset_collate = $GLOBALS['wpdb']->get_charset_collate();
+			dbDelta("CREATE TABLE {$GLOBALS['wpdb']->prefix}gl_salon_hours (
+				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+				salon_id bigint(20) NOT NULL,
+				day_of_week tinyint(1) NOT NULL,
+				open_time time NOT NULL,
+				close_time time NOT NULL,
+				PRIMARY KEY  (id),
+				KEY salon_id (salon_id)
+			) $charset_collate;");
+		}
+
+		// PHASE 1.2: Add UNIQUE constraint (safe since duplicate check passed)
+		if (self::table_exists($GLOBALS['wpdb']->prefix . 'gl_appointments')) {
+			$index_exists = $GLOBALS['wpdb']->get_var("SHOW INDEX FROM {$GLOBALS['wpdb']->prefix}gl_appointments WHERE Key_name = 'staff_time'");
+			if (!$index_exists) {
+				$GLOBALS['wpdb']->query("ALTER TABLE {$GLOBALS['wpdb']->prefix}gl_appointments ADD UNIQUE INDEX staff_time (staff_id, appointment_time)");
+			}
+		}
+
 		$version = (int)get_option('glamlux_migration_version', 0);
 		$target_version = 6;
 
@@ -119,6 +156,29 @@ class GlamLux_Activator
 		if ($version < $target_version) {
 			update_option('glamlux_migration_version', $target_version);
 		}
+
+		// Conclude PHASE 0.1
+		update_option('glamlux_db_version', GLAMLUX_DB_VERSION);
+	}
+
+	/**
+	 * Phase 0.2: Detect duplicates before UNIQUE constraint
+	 */
+	private static function detect_appointment_duplicates(): bool
+	{
+		global $wpdb;
+		$duplicates = $wpdb->get_results("
+			SELECT staff_id, appointment_time, COUNT(*) as count
+			FROM {$wpdb->prefix}gl_appointments
+			GROUP BY staff_id, appointment_time
+			HAVING COUNT(*) > 1
+		");
+
+		if (!empty($duplicates)) {
+			glamlux_log_error('Migration Aborted: Found duplicate appointments for staff slots. Resolve manually before upgrading DB.', ['duplicates' => $duplicates]);
+			return true;
+		}
+		return false;
 	}
 
 	private static function table_exists(string $table_name): bool
@@ -372,6 +432,7 @@ class GlamLux_Activator
 			amount decimal(10,2) NOT NULL,
 			payment_status varchar(50) DEFAULT 'pending' NOT NULL,
 			PRIMARY KEY  (id),
+			UNIQUE KEY staff_time (staff_id, appointment_time),
 			KEY salon_time (salon_id, appointment_time),
 			KEY idx_salon_time_status (salon_id, appointment_time, status)
 		) $charset_collate;";
@@ -578,6 +639,17 @@ class GlamLux_Activator
 			KEY salon_date (salon_id, shift_date)
 		) $charset_collate;";
 
+		// 20. Salon Hours
+		$sql_salon_hours = "CREATE TABLE {$wpdb->prefix}gl_salon_hours (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			salon_id bigint(20) NOT NULL,
+			day_of_week tinyint(1) NOT NULL,
+			open_time time NOT NULL,
+			close_time time NOT NULL,
+			PRIMARY KEY  (id),
+			KEY salon_id (salon_id)
+		) $charset_collate;";
+
 		// Execute all dbDelta calls
 		dbDelta($sql_franchises);
 		dbDelta($sql_salons);
@@ -598,6 +670,7 @@ class GlamLux_Activator
 		dbDelta($sql_membership_purchases);
 		dbDelta($sql_attendance);
 		dbDelta($sql_shifts);
+		dbDelta($sql_salon_hours);
 	}
 
 	/**
@@ -646,15 +719,32 @@ class GlamLux_Activator
 		);
 
 		// State Manager
-		add_role(
-			'glamlux_state_manager',
-			__('State Manager', 'glamlux-core'),
-			array(
-			'read' => true,
-			'view_state_reports' => true,
-			'manage_glamlux_franchise' => true,
-		)
-		);
+		if (!get_role('glamlux_state_manager')) {
+			add_role(
+				'glamlux_state_manager',
+				__('State Manager', 'glamlux-core'),
+				array(
+				'read' => true,
+				'view_state_reports' => true,
+				'manage_glamlux_franchise' => true,
+			)
+			);
+		}
+
+		// Salon Manager (Phase 1.3)
+		if (!get_role('glamlux_salon_manager')) {
+			add_role(
+				'glamlux_salon_manager',
+				__('Salon Manager', 'glamlux-core'),
+				array(
+				'read' => true,
+				'manage_glamlux_salon' => true,
+				'view_salon_reports' => true,
+				'manage_glamlux_appointments' => true,
+				'manage_glamlux_inventory' => true,
+			)
+			);
+		}
 
 		// After add_role, sync all caps to current definitions
 		self::update_role_capabilities();

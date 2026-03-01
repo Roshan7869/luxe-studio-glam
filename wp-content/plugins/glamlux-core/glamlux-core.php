@@ -13,6 +13,7 @@ if (!defined('WPINC')) {
 }
 
 define('GLAMLUX_VERSION', '3.0.0');
+define('GLAMLUX_DB_VERSION', '3.0.0');
 define('GLAMLUX_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('GLAMLUX_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -87,17 +88,7 @@ function glamlux_maybe_upgrade()
 }
 add_action('plugins_loaded', 'glamlux_maybe_upgrade', 1);
 
-// Always keep role capabilities in sync — no re-activation needed after updates
-add_action('plugins_loaded', function () {
-	if (class_exists('GlamLux_Activator')) {
-		GlamLux_Activator::update_role_capabilities();
-	}
-	else {
-		require_once GLAMLUX_PLUGIN_DIR . 'Core/class-activator.php';
-		GlamLux_Activator::update_role_capabilities();
-	}
-}, 5);
-
+// Role capabilities are now updated ONLY on plugin activation/upgrade to save performance.
 // ─────────────────────────────────────────────────────────────────────────────
 // Bootstrap — Enterprise Module Loader (v3.0.0)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -138,7 +129,6 @@ function run_glamlux_core()
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-operations-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-gdpr-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-health-controller.php';
-	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-glamlux-data-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-rest-manager.php';
 
 	// ── STEP 2: Event Bus (load FIRST — all services depend on it) ───────────
@@ -187,6 +177,7 @@ function run_glamlux_core()
 	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-service-inventory.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-service-gdpr.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-service-operations.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-event-listeners.php';
 
 	// ── STEP 6: Boot Event Listeners ─────────────────────────────────────────
 	GlamLux_Service_Commission::init(); // Legacy static listener — backward compat
@@ -206,6 +197,7 @@ function run_glamlux_core()
 	require_once GLAMLUX_PLUGIN_DIR . 'admin/modules/class-glamlux-salons.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'admin/modules/class-glamlux-staff.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'admin/modules/class-glamlux-memberships.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'admin/modules/class-glamlux-inventory-admin.php';
 
 	// ── STEP 8: Instantiate Services (global DI references) ──────────────────
 

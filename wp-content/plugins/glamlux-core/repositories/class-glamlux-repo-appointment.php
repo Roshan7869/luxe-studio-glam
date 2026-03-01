@@ -6,11 +6,39 @@ class GlamLux_Repo_Appointment
 		global $wpdb;
 		return $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}gl_appointments WHERE id=%d LIMIT 1", $id), ARRAY_A);
 	}
-	public function check_availability($staff_id, $time)
+	public function has_time_overlap($staff_id, $start_time, $end_time)
 	{
 		global $wpdb;
-		$exists = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$wpdb->prefix}gl_appointments WHERE staff_id=%d AND appointment_time=%s AND status NOT IN ('cancelled','refunded')", $staff_id, $time));
-		return !$exists;
+		// Phase 2: Structural overlap detection (start < row_end AND end > row_start)
+		$exists = $wpdb->get_var($wpdb->prepare(
+			"SELECT id FROM {$wpdb->prefix}gl_appointments
+			 WHERE staff_id = %d AND status NOT IN ('cancelled','refunded')
+			   AND appointment_time < %s
+			   AND DATE_ADD(appointment_time, INTERVAL duration_minutes MINUTE) > %s",
+			$staff_id, $end_time, $start_time
+		));
+		return (bool)$exists;
+	}
+
+	public function count_booked_staff($salon_id, $time)
+	{
+		global $wpdb;
+		return (int)$wpdb->get_var($wpdb->prepare(
+			"SELECT COUNT(*) FROM {$wpdb->prefix}gl_appointments
+			 WHERE salon_id = %d AND appointment_time = %s AND status IN ('confirmed','pending')",
+			$salon_id, $time
+		));
+	}
+
+	public function get_salon_hours($salon_id, $day_of_week)
+	{
+		global $wpdb;
+		// Assuming wp_gl_salon_hours contains columns: salon_id, day_of_week (0-6), open_time, close_time
+		return $wpdb->get_row($wpdb->prepare(
+			"SELECT open_time, close_time FROM {$wpdb->prefix}gl_salon_hours
+			 WHERE salon_id = %d AND day_of_week = %d LIMIT 1",
+			$salon_id, $day_of_week
+		));
 	}
 	public function create_appointment($data)
 	{
@@ -22,6 +50,11 @@ class GlamLux_Repo_Appointment
 	{
 		global $wpdb;
 		return false !== $wpdb->update($wpdb->prefix . "gl_appointments", ["status" => $status, "updated_at" => current_time('mysql')], ["id" => $id]);
+	}
+	public function update_payment_status($id, $payment_status, $status)
+	{
+		global $wpdb;
+		return false !== $wpdb->update($wpdb->prefix . "gl_appointments", ["payment_status" => $payment_status, "status" => $status, "updated_at" => current_time('mysql')], ["id" => $id]);
 	}
 	public function transaction_start()
 	{

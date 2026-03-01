@@ -44,6 +44,7 @@ class GlamLux_Admin
 		add_submenu_page('glamlux-dashboard', 'Salons', 'All Salons', 'manage_glamlux_platform', 'glamlux-salons', array($this, 'display_salons'));
 		add_submenu_page('glamlux-dashboard', 'Staff', 'All Staff', 'manage_glamlux_platform', 'glamlux-staff', array($this, 'display_staff'));
 		add_submenu_page('glamlux-dashboard', 'Memberships', 'Memberships', 'manage_glamlux_platform', 'glamlux-memberships', array($this, 'display_memberships'));
+		add_submenu_page('glamlux-dashboard', 'Inventory', 'Inventory', 'manage_glamlux_platform', 'glamlux-inventory', array($this, 'display_inventory'));
 		add_submenu_page('glamlux-dashboard', 'Payroll (Global)', 'Payroll', 'manage_glamlux_platform', 'glamlux-payroll', array($this, 'display_payroll'));
 
 		// ─── Franchise Admin Top Menu ───────────────────────────────────────────
@@ -60,6 +61,7 @@ class GlamLux_Admin
 		add_submenu_page('glamlux-salon', 'Manage Salons', 'Salons', 'manage_glamlux_franchise', 'glamlux-my-salons', array($this, 'display_salons'));
 		add_submenu_page('glamlux-salon', 'Payroll', 'Payroll', 'manage_glamlux_franchise', 'glamlux-my-payroll', array($this, 'display_payroll'));
 		add_submenu_page('glamlux-salon', 'Memberships', 'Memberships', 'manage_glamlux_franchise', 'glamlux-my-memberships', array($this, 'display_memberships'));
+		add_submenu_page('glamlux-salon', 'Inventory', 'Inventory', 'manage_glamlux_franchise', 'glamlux-my-inventory', array($this, 'display_inventory'));
 		add_submenu_page('glamlux-salon', 'Appointments', 'Appointments', 'manage_glamlux_franchise', 'glamlux-my-appointments', array($this, 'display_appointments'));
 
 		// ─── Staff Menu ─────────────────────────────────────────────────────────
@@ -234,6 +236,12 @@ class GlamLux_Admin
 	{
 		$payroll = new GlamLux_Payroll();
 		$payroll->render_admin_page();
+	}
+
+	public function display_inventory()
+	{
+		$inv = new GlamLux_Inventory_Admin();
+		$inv->render_admin_page();
 	}
 
 	public function display_appointments()

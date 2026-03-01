@@ -16,12 +16,9 @@ class GlamLux_Appointments
 
 	public function __construct()
 	{
-		// Legacy AJAX hook still supported for direct form submissions
-		add_action('wp_ajax_glamlux_book_appointment', array($this, 'ajax_book_appointment'));
-		add_action('wp_ajax_nopriv_glamlux_book_appointment', array($this, 'ajax_book_appointment_guest'));
-		add_action('wp_ajax_glamlux_check_availability', array($this, 'ajax_check_availability'));
-		add_action('wp_ajax_nopriv_glamlux_check_availability', array($this, 'ajax_check_availability'));
+	// AJAX hooks migrated to class-glamlux-ajax.php (Phase 1.4)
 	}
+
 
 	// -------------------------------------------------------------------------
 	// Admin Dashboard View
@@ -201,110 +198,15 @@ class GlamLux_Appointments
 	 */
 	public function check_availability($salon_id, $appointment_time)
 	{
-		global $wpdb;
+		$availabilityService = new GlamLux_Service_Availability();
 
-		$count = $wpdb->get_var(
-			$wpdb->prepare(
-			"SELECT COUNT(*) FROM {$wpdb->prefix}gl_appointments
-				 WHERE salon_id = %d
-				 AND appointment_time = %s
-				 AND status NOT IN ('cancelled','noshow')",
-			absint($salon_id),
-			sanitize_text_field($appointment_time)
-		)
-		);
-
-		return (0 === (int)$count);
+		// Defaulting to 30 mins for the frontend availability checker 
+		// if frontend isn't yet sending duration.
+		return $availabilityService->is_salon_slot_available($salon_id, $appointment_time, 30);
 	}
 
-	// -------------------------------------------------------------------------
-	// AJAX Handlers
-	// -------------------------------------------------------------------------
+// -------------------------------------------------------------------------
+// AJAX Handlers Migrated to class-glamlux-ajax.php
+// -------------------------------------------------------------------------
 
-	/**
-	 * AJAX: Check slot availability.
-	 * Publicly accessible (nopriv) since we don't reveal sensitive data.
-	 */
-	public function ajax_check_availability()
-	{
-		// Nonce verification
-		if (!isset($_POST['_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['_nonce'])), 'glamlux_ajax_nonce')) {
-			wp_send_json_error(array('message' => __('Security check failed.', 'glamlux-core')), 403);
-		}
-
-		$salon_id = absint($_POST['salon_id'] ?? 0);
-		$appointment_time = sanitize_text_field($_POST['appointment_time'] ?? '');
-
-		if (!$salon_id || !$appointment_time) {
-			wp_send_json_error(array('message' => __('Missing required fields.', 'glamlux-core')), 400);
-		}
-
-		$available = $this->check_availability($salon_id, $appointment_time);
-		wp_send_json_success(array('available' => $available));
-	}
-
-	/**
-	 * AJAX: Book appointment — requires login.
-	 */
-	public function ajax_book_appointment()
-	{
-		// Nonce verification
-		if (!isset($_POST['_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['_nonce'])), 'glamlux_ajax_nonce')) {
-			wp_send_json_error(array('message' => __('Security check failed.', 'glamlux-core')), 403);
-		}
-
-		$user_id = get_current_user_id();
-		if (!$user_id) {
-			wp_send_json_error(array('message' => __('You must be logged in to book.', 'glamlux-core')), 401);
-		}
-
-		$salon_id = absint($_POST['salon_id'] ?? 0);
-		$service_id = sanitize_text_field($_POST['service_id'] ?? '');
-		$appointment_time = sanitize_text_field($_POST['appointment_time'] ?? '');
-		$notes = sanitize_textarea_field($_POST['notes'] ?? '');
-
-		if (!$salon_id || !$service_id || !$appointment_time) {
-			wp_send_json_error(array('message' => __('Please fill in all required fields.', 'glamlux-core')), 400);
-		}
-
-		// Resolve client_id
-		global $wpdb;
-		$client = $wpdb->get_row(
-			$wpdb->prepare("SELECT id FROM {$wpdb->prefix}gl_clients WHERE wp_user_id = %d LIMIT 1", $user_id)
-		);
-
-		if (!$client) {
-			$wpdb->insert("{$wpdb->prefix}gl_clients", array('wp_user_id' => $user_id, 'created_at' => current_time('mysql')));
-			$client_id = $wpdb->insert_id;
-		}
-		else {
-			$client_id = $client->id;
-		}
-
-		$result = $this->create_appointment($client_id, $salon_id, $service_id, $appointment_time, $notes);
-
-		if (is_wp_error($result)) {
-			wp_send_json_error(array('message' => $result->get_error_message()), 409);
-		}
-
-		wp_send_json_success(array(
-			'message' => __('Booking confirmed! You will receive an SMS shortly.', 'glamlux-core'),
-			'appointment_id' => $result,
-		));
-	}
-
-	/**
-	 * AJAX: Guest booking attempt — redirect to login.
-	 */
-	public function ajax_book_appointment_guest()
-	{
-		// Still verify nonce to prevent any enumeration
-		if (!isset($_POST['_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['_nonce'])), 'glamlux_ajax_nonce')) {
-			wp_send_json_error(array('message' => __('Security check failed.', 'glamlux-core')), 403);
-		}
-		wp_send_json_error(array(
-			'message' => __('Please log in or create an account to book an appointment.', 'glamlux-core'),
-			'login_url' => wp_login_url(home_url('/')),
-		), 401);
-	}
 }

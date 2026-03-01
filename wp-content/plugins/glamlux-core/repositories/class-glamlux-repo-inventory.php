@@ -78,4 +78,10 @@ class GlamLux_Repo_Inventory
             ...array_merge($args, array($limit, $offset))
         ), ARRAY_A) ?: array();
     }
+
+    public function flush_all_cache(): void
+    {
+        global $wpdb;
+        $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_gl_inv_%'");
+    }
 }

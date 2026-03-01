@@ -96,7 +96,7 @@ if (false === $salons_raw) {
 
     if ($table_exists) {
         $salons_raw = $wpdb->get_results("
-            SELECT name, city, phone, interior_image_url as image_url 
+            SELECT name, address, interior_image_url as image_url 
             FROM {$table_salons} 
             WHERE is_active = 1 
             ORDER BY created_at ASC 
@@ -121,12 +121,12 @@ if (false === $staff_raw) {
 
     if ($table_exists) {
         $staff_raw = $wpdb->get_results("
-            SELECT u.display_name AS name, s.job_role AS role, s.profile_image_url as image_url, l.name as salon_name
+            SELECT u.display_name AS full_name, s.job_role AS role, s.profile_image_url as image_url, l.name as salon_name
             FROM {$table_staff} s
             LEFT JOIN {$wpdb->users} u ON s.wp_user_id = u.ID
             LEFT JOIN {$table_salons} l ON s.salon_id = l.id
             WHERE s.is_active = 1 
-            ORDER BY s.created_at ASC 
+            ORDER BY s.id ASC 
             LIMIT 6
         ", ARRAY_A);
     }
@@ -143,16 +143,16 @@ $logs_raw = get_transient('glamlux_fp_logs_db');
 if (false === $logs_raw) {
     global $wpdb;
     $table_logs = $wpdb->prefix . 'gl_service_logs';
-    $table_services = $wpdb->prefix . 'gl_service_pricing';
+    $table_appointments = $wpdb->prefix . 'gl_appointments';
     $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_logs}'") === $table_logs;
 
     if ($table_exists) {
         $logs_raw = $wpdb->get_results("
-            SELECT l.before_image_url, l.after_image_url, s.service_name 
+            SELECT l.before_image_url, l.after_image_url, a.service_name 
             FROM {$table_logs} l
-            LEFT JOIN {$table_services} s ON l.service_id = s.id
+            LEFT JOIN {$table_appointments} a ON l.appointment_id = a.id
             WHERE l.before_image_url IS NOT NULL AND l.after_image_url IS NOT NULL 
-            ORDER BY l.created_at DESC 
+            ORDER BY l.logged_at DESC 
             LIMIT 6
         ", ARRAY_A);
     }
@@ -173,10 +173,10 @@ if (false === $memberships_raw) {
 
     if ($table_exists) {
         $memberships_raw = $wpdb->get_results("
-            SELECT tier_name, benefits, price_monthly, banner_image_url 
+            SELECT name as tier_name, tier_level, benefits, price as price_monthly, banner_image_url 
             FROM {$table_memberships} 
             WHERE is_active = 1 
-            ORDER BY price_monthly ASC 
+            ORDER BY price ASC 
             LIMIT 3
         ", ARRAY_A);
     }
@@ -185,6 +185,7 @@ if (false === $memberships_raw) {
     }
     set_transient('glamlux_fp_memberships_db', $memberships_raw, 15 * MINUTE_IN_SECONDS);
 }
+$memberships = !empty($memberships_raw) && is_array($memberships_raw) ? $memberships_raw : [];
 // ─── Fetch Franchises directly from DB
 $franchises_raw = get_transient('glamlux_fp_franchises_db');
 if (false === $franchises_raw) {
@@ -252,7 +253,8 @@ $testimonials = array(
 
         <!-- Actions -->
         <div id="hero-actions" style="display:flex;gap:16px;flex-wrap:wrap;opacity:0;transform:translateY(20px);">
-            <a href="<?php echo esc_url($cta_url); ?>"
+            <a href="javascript:void(0)"
+               data-gl-modal="booking"
                id="hero-cta-main"
                style="display:inline-flex;align-items:center;gap:10px;background:#C6A75E;color:#fff;padding:15px 32px;border-radius:9999px;font-size:0.875rem;font-weight:600;letter-spacing:0.04em;text-decoration:none;box-shadow:0 6px 20px rgba(198,167,94,0.40);transition:all 200ms ease;animation:gl-pulse-glow 4s ease-in-out infinite;"
                onmouseover="this.style.transform='translateY(-3px) scale(1.02)';this.style.boxShadow='0 12px 32px rgba(198,167,94,0.55)'"
@@ -390,8 +392,7 @@ endforeach; ?>
             </div>
             <div style="padding:28px;">
                 <h3 style="font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;color:#121212;margin-bottom:8px;"><?php echo esc_html($salon['name']); ?></h3>
-                <p style="font-size:0.875rem;color:#6A6A6A;margin-bottom:4px;">📍 <?php echo esc_html($salon['city']); ?></p>
-                <p style="font-size:0.875rem;color:#6A6A6A;">📞 <?php echo esc_html($salon['phone'] ?? 'Contact Us'); ?></p>
+                <p style="font-size:0.875rem;color:#6A6A6A;margin-bottom:4px;">📍 <?php echo esc_html($salon['address'] ?? ''); ?></p>
             </div>
         </article>
         <?php

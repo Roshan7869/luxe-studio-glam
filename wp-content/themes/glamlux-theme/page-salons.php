@@ -9,7 +9,7 @@ global $wpdb;
 $salons = get_transient('glamlux_page_salons');
 if (false === $salons) {
     $salons = $wpdb->get_results(
-        "SELECT s.id, s.name, s.address, s.city, s.phone, s.email, s.interior_image_url, s.is_active,
+        "SELECT s.id, s.name, s.address, s.email, s.interior_image_url, s.is_active,
                 COUNT(DISTINCT st.id) AS staff_count
            FROM {$wpdb->prefix}gl_salons s
            LEFT JOIN {$wpdb->prefix}gl_staff st ON st.salon_id = s.id AND st.is_active = 1
@@ -53,9 +53,9 @@ else: ?>
                      onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"
                      onerror="this.src='https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=400&h=280&fit=crop'">
                 <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.40),transparent 60%);"></div>
-                <?php if (!empty($salon['city'])): ?>
+                <?php if (!empty($salon['address'])): ?>
                 <div style="position:absolute;bottom:16px;left:20px;">
-                    <span style="background:rgba(198,167,94,0.90);color:#fff;font-size:0.7rem;font-weight:700;letter-spacing:0.08em;padding:4px 12px;border-radius:9999px;text-transform:uppercase;"><?php echo esc_html($salon['city']); ?></span>
+                    <span style="background:rgba(198,167,94,0.90);color:#fff;font-size:0.7rem;font-weight:700;letter-spacing:0.08em;padding:4px 12px;border-radius:9999px;text-transform:uppercase;"><?php echo esc_html(explode(',', $salon['address'])[0]); ?></span>
                 </div>
                 <?php
         endif; ?>
@@ -67,10 +67,7 @@ else: ?>
                 <?php
         endif; ?>
                 <div style="display:flex;align-items:center;justify-content:space-between;padding-top:16px;border-top:1px solid #F0EFEB;">
-                    <?php if (!empty($salon['phone'])): ?>
-                    <a href="tel:<?php echo esc_attr($salon['phone']); ?>" style="font-size:0.8125rem;color:#121212;font-weight:500;text-decoration:none;">📞 <?php echo esc_html($salon['phone']); ?></a>
-                    <?php
-        endif; ?>
+                    <span style="font-size:0.8125rem;color:#121212;font-weight:500;text-decoration:none;">Book via App</span>
                     <span style="font-size:0.75rem;color:#C6A75E;font-weight:600;"><?php echo intval($salon['staff_count']); ?> Stylists</span>
                 </div>
             </div>

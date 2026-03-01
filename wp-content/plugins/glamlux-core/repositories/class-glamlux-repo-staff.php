@@ -66,6 +66,25 @@ class GlamLux_Repo_Staff
         ) ?: null;
     }
 
+    /**
+     * Phase 3 (Load Balancer): Fetch staff sorted by how many active appointments they have today, ascending.
+     */
+    public function get_staff_ordered_by_current_load(int $salon_id, string $date): array
+    {
+        global $wpdb;
+        $sql = "SELECT s.id, COUNT(a.id) AS total_today
+                FROM {$wpdb->prefix}gl_staff s
+                LEFT JOIN {$wpdb->prefix}gl_appointments a 
+                  ON s.id = a.staff_id 
+                  AND DATE(a.appointment_time) = %s 
+                  AND a.status NOT IN ('cancelled', 'refunded')
+                WHERE s.salon_id = %d AND s.is_active = 1
+                GROUP BY s.id
+                ORDER BY total_today ASC";
+
+        return $wpdb->get_results($wpdb->prepare($sql, $date, $salon_id), ARRAY_A) ?: [];
+    }
+
     public function get_by_user_id(int $wp_user_id): ?array
     {
         global $wpdb;

@@ -15,22 +15,22 @@ class GlamLux_Repo_Webhook
         global $wpdb;
         $table = $wpdb->prefix . 'gl_webhook_events';
 
-        $table_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table));
-        if ($table_exists === $table) {
-            $exists = $wpdb->get_var(
-                $wpdb->prepare("SELECT id FROM {$table} WHERE gateway = %s AND transaction_id = %s", $gateway, $transaction_id)
-            );
-            if ($exists) {
-                return false;
-            }
-            $wpdb->insert($table, array(
-                'gateway' => $gateway,
-                'transaction_id' => $transaction_id,
-                'event_type' => $event_type,
-                'payload' => $payload,
-                'created_at' => current_time('mysql'),
-            ));
+        // Suppress WP error output so duplicate key insertion safely fails quietly.
+        $wpdb->suppress_errors(true);
+        $inserted = $wpdb->insert($table, array(
+            'gateway' => $gateway,
+            'transaction_id' => $transaction_id,
+            'event_type' => $event_type,
+            'payload' => $payload,
+            'created_at' => current_time('mysql'),
+        ));
+        $wpdb->suppress_errors(false);
+
+        // If it failed to insert, it means the UNIQUE KEY (gateway, transaction_id) fired.
+        if (!$inserted) {
+            return false;
         }
+
         return true;
     }
 }

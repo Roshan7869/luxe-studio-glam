@@ -191,7 +191,6 @@ class GlamLux_Service_Payment
 
     private function on_payment_captured(array $payment): void
     {
-        global $wpdb;
 
         $razorpay_order_id = $payment['order_id'] ?? '';
         $notes = $payment['notes'] ?? array();
@@ -202,16 +201,8 @@ class GlamLux_Service_Payment
         }
 
         // Mark appointment as paid
-        $wpdb->update(
-            $wpdb->prefix . 'gl_appointments',
-            array(
-            'payment_status' => 'paid',
-            'status' => 'confirmed',
-        ),
-            array('id' => $appointment_id),
-            array('%s', '%s'),
-            array('%d')
-        );
+        $repo = new GlamLux_Repo_Appointment();
+        $repo->update_payment_status($appointment_id, 'paid', 'confirmed');
 
         // Dispatch domain event → triggers CommissionService, InventoryService, NotificationService
         $this->dispatcher->dispatch('payment_captured', array(
@@ -226,7 +217,6 @@ class GlamLux_Service_Payment
 
     private function on_payment_failed(array $payment): void
     {
-        global $wpdb;
 
         $notes = $payment['notes'] ?? array();
         $appointment_id = (int)($notes['appointment_id'] ?? 0);
@@ -235,13 +225,8 @@ class GlamLux_Service_Payment
             return;
         }
 
-        $wpdb->update(
-            $wpdb->prefix . 'gl_appointments',
-            array('payment_status' => 'failed', 'status' => 'cancelled'),
-            array('id' => $appointment_id),
-            array('%s', '%s'),
-            array('%d')
-        );
+        $repo = new GlamLux_Repo_Appointment();
+        $repo->update_payment_status($appointment_id, 'failed', 'cancelled');
 
         $this->dispatcher->dispatch('payment_failed', array('appointment_id' => $appointment_id));
     }
