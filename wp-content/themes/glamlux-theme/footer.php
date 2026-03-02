@@ -238,42 +238,20 @@
     (function () {
         'use strict';
 
-        // ── 1. Lenis smooth scroll (single source of scroll truth) ─────────────────
-        var lenis;
-        if (typeof Lenis !== 'undefined') {
-            lenis = new Lenis({
-                duration: 1.15,
-                smoothWheel: true,
-                smoothTouch: false,
-                touchMultiplier: 1.2,
-            });
-
-            // ── 2. Lenis RAF loop + optional GSAP/ScrollTrigger sync ────────────────────
-            // Lenis v1.x raf() expects ms from performance.now().
-            // Drive Lenis via its own rAF loop; sync GSAP separately.
-            function lenisRaf(time) {
-                lenis.raf(time);
-                requestAnimationFrame(lenisRaf);
-            }
-            requestAnimationFrame(lenisRaf);
-
-            if (typeof gsap !== 'undefined') {
-                gsap.ticker.lagSmoothing(0);
-                if (typeof ScrollTrigger !== 'undefined') {
-                    gsap.registerPlugin(ScrollTrigger);
-                    lenis.on('scroll', ScrollTrigger.update);
-                }
-            }
-
-            lenis.on('scroll', function (e) {
-                window.dispatchEvent(new CustomEvent('glamlux:scroll', {
-                    detail: {
-                        y: e && typeof e.scroll === 'number' ? e.scroll : window.scrollY,
-                        progress: e && typeof e.progress === 'number' ? e.progress : 0,
-                    }
-                }));
-            });
+        // ── 1. GSAP ScrollTrigger (native scroll — Lenis disabled for reliability) ──
+        if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+            gsap.registerPlugin(ScrollTrigger);
+            gsap.ticker.lagSmoothing(0);
         }
+
+        // ── Scroll event for custom listeners ───────────────────────────────────────
+        window.addEventListener('scroll', function () {
+            var y = window.scrollY || document.documentElement.scrollTop;
+            var h = document.documentElement.scrollHeight - window.innerHeight;
+            window.dispatchEvent(new CustomEvent('glamlux:scroll', {
+                detail: { y: y, progress: h > 0 ? y / h : 0 }
+            }));
+        }, { passive: true });
 
         // ── 2b. GSAP Hero Entrance (guarded) ────────────────────────────────────────
         if (typeof gsap !== 'undefined') {
