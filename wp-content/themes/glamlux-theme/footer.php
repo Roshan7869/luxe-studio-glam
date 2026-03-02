@@ -188,11 +188,24 @@ if (typeof Lenis !== 'undefined') {
         touchMultiplier: 1.2,
     });
 
-    function raf(time){
-        lenis.raf(time);
+    // ── 2. GSAP hero entrance & Ticker Sync ─────────────────────────────────────
+    if (typeof gsap !== 'undefined') {
+        if (typeof ScrollTrigger !== 'undefined') {
+            gsap.registerPlugin(ScrollTrigger);
+            lenis.on('scroll', ScrollTrigger.update);
+        }
+        
+        gsap.ticker.add(function(time) {
+            lenis.raf(time * 1000);
+        });
+        gsap.ticker.lagSmoothing(0);
+    } else {
+        function raf(time){
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
         requestAnimationFrame(raf);
     }
-    requestAnimationFrame(raf);
 
     lenis.on('scroll', function(e){
         window.dispatchEvent(new CustomEvent('glamlux:scroll', {
@@ -203,15 +216,6 @@ if (typeof Lenis !== 'undefined') {
         }));
     });
 }
-
-// ── 2. GSAP hero entrance ───────────────────────────────────────────────────
-if (typeof gsap !== 'undefined') {
-    if (typeof ScrollTrigger !== 'undefined') {
-        gsap.registerPlugin(ScrollTrigger);
-        if (lenis) {
-            lenis.on('scroll', ScrollTrigger.update);
-        }
-    }
 
     var tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 

@@ -176,14 +176,13 @@ $stats = [
 .gl-services-scroll{
   display:flex;gap:20px;
   overflow-x:auto;
-  scroll-snap-type:x mandatory;
   -webkit-overflow-scrolling:touch;
   padding-bottom:8px;
   scrollbar-width:none;
 }
 .gl-services-scroll::-webkit-scrollbar{display:none;}
 .gl-service-card{
-  flex:0 0 240px;scroll-snap-align:start;
+  flex:0 0 240px;
   padding:28px 24px;border-radius:var(--radius-lg);
   background:#fff;border:1px solid rgba(0,0,0,0.05);
   box-shadow:var(--shadow-soft);
