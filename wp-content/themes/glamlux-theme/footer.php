@@ -48,7 +48,8 @@
                 <div>
                     <h4
                         style="font-size:0.6875rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:20px;">
-                        <?php echo esc_html($group_title); ?></h4>
+                        <?php echo esc_html($group_title); ?>
+                    </h4>
                     <ul style="list-style:none;">
                         <?php
                         if (has_nav_menu($location) && isset($locations[$location])) {
@@ -247,23 +248,21 @@
                 touchMultiplier: 1.2,
             });
 
-            // ── 2. GSAP hero entrance & Ticker Sync ─────────────────────────────────────
+            // ── 2. Lenis RAF loop + optional GSAP/ScrollTrigger sync ────────────────────
+            // Lenis v1.x raf() expects ms from performance.now().
+            // Drive Lenis via its own rAF loop; sync GSAP separately.
+            function lenisRaf(time) {
+                lenis.raf(time);
+                requestAnimationFrame(lenisRaf);
+            }
+            requestAnimationFrame(lenisRaf);
+
             if (typeof gsap !== 'undefined') {
+                gsap.ticker.lagSmoothing(0);
                 if (typeof ScrollTrigger !== 'undefined') {
                     gsap.registerPlugin(ScrollTrigger);
                     lenis.on('scroll', ScrollTrigger.update);
                 }
-
-                gsap.ticker.add(function (time) {
-                    lenis.raf(time * 1000);
-                });
-                gsap.ticker.lagSmoothing(0);
-            } else {
-                function raf(time) {
-                    lenis.raf(time);
-                    requestAnimationFrame(raf);
-                }
-                requestAnimationFrame(raf);
             }
 
             lenis.on('scroll', function (e) {
