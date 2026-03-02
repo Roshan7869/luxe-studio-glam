@@ -50,8 +50,10 @@ if ($redis_host && file_exists($redis_dropin)) {
     if ($redis_pass)
         define('WP_REDIS_PASSWORD', $redis_pass);
 
-    // Prevent Redis from evicting core DB payload caches
-    define('WP_REDIS_MAXMEMORY_POLICY', 'noeviction');
+    // PHASE 5: Smart cache eviction policy prevents OOM crashes
+    // allkeys-lru will evict least-recently-used keys when memory limit is reached
+    // instead of rejecting writes and crashing the application
+    define('WP_REDIS_MAXMEMORY_POLICY', 'allkeys-lru');
     define('WP_REDIS_MAXMEMORY', '256M');
 }
 else {

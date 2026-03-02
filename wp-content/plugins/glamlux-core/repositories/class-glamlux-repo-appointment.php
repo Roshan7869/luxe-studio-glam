@@ -9,12 +9,14 @@ class GlamLux_Repo_Appointment
 	public function has_time_overlap($staff_id, $start_time, $end_time)
 	{
 		global $wpdb;
-		// Phase 2: Structural overlap detection (start < row_end AND end > row_start)
+		// PHASE 2: Structural overlap detection with row-level locking
+		// Use SELECT ... FOR UPDATE to prevent concurrent bookings during calculation
 		$exists = $wpdb->get_var($wpdb->prepare(
 			"SELECT id FROM {$wpdb->prefix}gl_appointments
 			 WHERE staff_id = %d AND status NOT IN ('cancelled','refunded')
 			   AND appointment_time < %s
-			   AND DATE_ADD(appointment_time, INTERVAL duration_minutes MINUTE) > %s",
+			   AND DATE_ADD(appointment_time, INTERVAL duration_minutes MINUTE) > %s
+			 FOR UPDATE",
 			$staff_id, $end_time, $start_time
 		));
 		return (bool)$exists;

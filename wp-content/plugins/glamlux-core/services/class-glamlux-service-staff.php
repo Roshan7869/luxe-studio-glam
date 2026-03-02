@@ -132,6 +132,18 @@ class GlamLux_Service_Staff
         }
 
         $success = $this->repo->deactivate($id);
+        if (!$success) {
+            return new WP_Error('db_error', 'Failed to deactivate staff.', ['status' => 500]);
+        }
+
+        // PHASE 3: Explicitly remove glamlux_staff role from WP user
+        // Prevents capability retention after database soft-delete
+        if (!empty($staff['wp_user_id'])) {
+            $user = get_user_by('ID', intval($staff['wp_user_id']));
+            if ($user) {
+                $user->remove_role('glamlux_staff');
+            }
+        }
 
         // Purge cache
         delete_transient('gl_api_staff_profiles_0');

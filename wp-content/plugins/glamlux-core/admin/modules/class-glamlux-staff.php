@@ -11,8 +11,19 @@ class GlamLux_Staff
 			wp_die('Unauthorized');
 		}
 
+		// PHASE 3: Enforce tenant isolation — filter by authenticated franchise admin's franchise
+		$franchise_filter = [];
+		if (current_user_can('manage_glamlux_franchise') && !current_user_can('manage_options')) {
+			// Franchise admin — get their assigned franchise from user meta
+			$user_id = get_current_user_id();
+			$assigned_franchise = get_user_meta($user_id, 'glamlux_managed_franchise_id', true);
+			if ($assigned_franchise) {
+				$franchise_filter['franchise_id'] = intval($assigned_franchise);
+			}
+		}
+
 		$service = new GlamLux_Service_Staff();
-		$staff_members = method_exists($service, 'get_all') ? $service->get_all([]) : [];
+		$staff_members = method_exists($service, 'get_all') ? $service->get_all($franchise_filter) : [];
 
 		echo '<div class="wrap">';
 		echo '<h1 class="wp-heading-inline">Manage Staff</h1>';

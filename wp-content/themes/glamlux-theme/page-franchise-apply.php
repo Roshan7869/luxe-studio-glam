@@ -177,7 +177,13 @@ endforeach; ?>
                 source:        'website_apply_form',
             })
         })
-        .then(function (r) { return r.json(); })
+        .then(function (r) { 
+            // PHASE 4: Validate HTTP response status before parsing JSON
+            if (!r.ok) {
+                throw new Error('API request failed: ' + r.status + ' ' + r.statusText);
+            }
+            return r.json(); 
+        })
         .then(function (data) {
             if (data && data.success) {
                 // Instantly swap the UI to success state
