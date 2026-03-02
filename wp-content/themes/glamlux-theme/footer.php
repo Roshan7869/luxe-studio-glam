@@ -236,16 +236,20 @@
             document.body.style.overflow = 'hidden';
             setTimeout(function () {
                 overlay.style.opacity = '1';
-                overlay.querySelector('.gl-modal').style.transform = 'scale(1) translateY(0)';
+                var inner = overlay.querySelector('.gl-modal-inner') || overlay.querySelector('.gl-modal');
+                if (inner) inner.style.transform = 'scale(1) translateY(0)';
             }, 10);
         };
 
         window.glamluxCloseModal = function (id) {
             var overlay = document.getElementById('gl-modal-' + id);
             if (!overlay) return;
-            overlay.style.opacity = '0';
-            overlay.querySelector('.gl-modal').style.transform = 'scale(0.93) translateY(20px)';
+            // CRITICAL: restore body overflow FIRST, before anything that might error
             document.body.style.overflow = '';
+            overlay.style.opacity = '0';
+            overlay.style.pointerEvents = 'none';
+            var inner = overlay.querySelector('.gl-modal-inner') || overlay.querySelector('.gl-modal');
+            if (inner) inner.style.transform = 'scale(0.93) translateY(20px)';
             setTimeout(function () { overlay.style.display = 'none'; }, 320);
         };
 
@@ -329,7 +333,7 @@
             requestAnimationFrame(function () {
                 requestAnimationFrame(function () {
                     toast.style.transform = 'translateX(0)';
-                    setTimeout(function () {
+             setTimeout(function () {
                         toast.style.transform = 'translateX(120%)';
                         setTimeout(function () { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 320);
                     }, 4000);
