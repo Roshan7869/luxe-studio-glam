@@ -653,8 +653,7 @@ $stats = [
     <!-- Actions -->
     <div id="hero-actions" style="display:flex;gap:14px;flex-wrap:wrap;opacity:0;transform:translateY(20px);">
       <a href="javascript:void(0)" data-gl-modal="booking" class="gl-btn-gold"
-        style="animation:gl-pulse-glow 4s ease-in-out infinite;"
-        onclick="document.getElementById('gl-booking-modal').style.display='flex';return false;">
+        style="animation:gl-pulse-glow 4s ease-in-out infinite;">
         Book Appointment
         <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
           <path d="M3 7.5h9M7.5 3l4.5 4.5-4.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
