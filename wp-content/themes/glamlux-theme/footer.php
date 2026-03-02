@@ -83,6 +83,94 @@ endforeach; ?>
 </div>
 </footer>
 
+<!-- ══ BOOKING MODAL ════════════════════════════════════════════════════════ -->
+<div id="gl-booking-modal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(10,8,5,0.80);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:24px;"
+     onclick="if(event.target===this)this.style.display='none';">
+  <div style="background:#fff;border-radius:28px;max-width:520px;width:100%;overflow:hidden;box-shadow:0 32px 96px rgba(0,0,0,0.32);position:relative;">
+    <!-- Modal header -->
+    <div style="background:linear-gradient(135deg,#121212 0%,#1e1a14 100%);padding:36px 40px 28px;position:relative;">
+      <div style="position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(198,167,94,0.15),transparent 70%);pointer-events:none;"></div>
+      <p style="font-size:0.625rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#C6A75E;margin-bottom:10px;">Reserve Your Session</p>
+      <h2 style="font-family:'Playfair Display',Georgia,serif;font-size:1.75rem;font-weight:700;color:#fff;letter-spacing:-0.02em;margin:0 0 6px;">Book an Appointment</h2>
+      <p style="font-size:0.875rem;color:rgba(255,255,255,0.52);margin:0;">Experience the GlamLux2Lux difference.</p>
+      <button onclick="document.getElementById('gl-booking-modal').style.display='none'" style="position:absolute;top:20px;right:20px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.6);border-radius:50%;width:36px;height:36px;cursor:pointer;display:grid;place-items:center;font-size:1.2rem;line-height:1;transition:all 200ms;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">&times;</button>
+    </div>
+    <!-- Modal form body -->
+    <div style="padding:36px 40px 40px;">
+      <form id="gl-booking-form" onsubmit="glSubmitBooking(event)">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+          <div>
+            <label style="display:block;font-size:0.75rem;font-weight:600;letter-spacing:0.05em;color:#6A6A6A;margin-bottom:6px;text-transform:uppercase;">Full Name</label>
+            <input type="text" name="name" required placeholder="Your name" style="width:100%;padding:13px 16px;border:1.5px solid rgba(0,0,0,0.10);border-radius:12px;font-family:'Inter',sans-serif;font-size:0.9375rem;background:#F7F6F2;color:#121212;outline:none;box-sizing:border-box;transition:border-color 200ms;" onfocus="this.style.borderColor='#C6A75E';this.style.background='#fff'" onblur="this.style.borderColor='rgba(0,0,0,0.10)';this.style.background='#F7F6F2'">
+          </div>
+          <div>
+            <label style="display:block;font-size:0.75rem;font-weight:600;letter-spacing:0.05em;color:#6A6A6A;margin-bottom:6px;text-transform:uppercase;">Phone</label>
+            <input type="tel" name="phone" required placeholder="+91 98765 43210" style="width:100%;padding:13px 16px;border:1.5px solid rgba(0,0,0,0.10);border-radius:12px;font-family:'Inter',sans-serif;font-size:0.9375rem;background:#F7F6F2;color:#121212;outline:none;box-sizing:border-box;transition:border-color 200ms;" onfocus="this.style.borderColor='#C6A75E';this.style.background='#fff'" onblur="this.style.borderColor='rgba(0,0,0,0.10)';this.style.background='#F7F6F2'">
+          </div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="display:block;font-size:0.75rem;font-weight:600;letter-spacing:0.05em;color:#6A6A6A;margin-bottom:6px;text-transform:uppercase;">Service</label>
+          <select name="service" style="width:100%;padding:13px 16px;border:1.5px solid rgba(0,0,0,0.10);border-radius:12px;font-family:'Inter',sans-serif;font-size:0.9375rem;background:#F7F6F2;color:#121212;outline:none;box-sizing:border-box;appearance:none;cursor:pointer;transition:border-color 200ms;" onfocus="this.style.borderColor='#C6A75E';this.style.background='#fff'" onblur="this.style.borderColor='rgba(0,0,0,0.10)';this.style.background='#F7F6F2'">
+            <option value="">Select a service...</option>
+            <option value="skincare">Skincare Rituals</option>
+            <option value="hair">Hair Couture</option>
+            <option value="body">Body Luxe Therapy</option>
+            <option value="nail">Nail Atelier</option>
+            <option value="bridal">Bridal Intelligence</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+          <div>
+            <label style="display:block;font-size:0.75rem;font-weight:600;letter-spacing:0.05em;color:#6A6A6A;margin-bottom:6px;text-transform:uppercase;">Preferred Date</label>
+            <input type="date" name="date" style="width:100%;padding:13px 16px;border:1.5px solid rgba(0,0,0,0.10);border-radius:12px;font-family:'Inter',sans-serif;font-size:0.9375rem;background:#F7F6F2;color:#121212;outline:none;box-sizing:border-box;transition:border-color 200ms;" onfocus="this.style.borderColor='#C6A75E';this.style.background='#fff'" onblur="this.style.borderColor='rgba(0,0,0,0.10)';this.style.background='#F7F6F2'">
+          </div>
+          <div>
+            <label style="display:block;font-size:0.75rem;font-weight:600;letter-spacing:0.05em;color:#6A6A6A;margin-bottom:6px;text-transform:uppercase;">Preferred Time</label>
+            <select name="time" style="width:100%;padding:13px 16px;border:1.5px solid rgba(0,0,0,0.10);border-radius:12px;font-family:'Inter',sans-serif;font-size:0.9375rem;background:#F7F6F2;color:#121212;outline:none;box-sizing:border-box;appearance:none;cursor:pointer;transition:border-color 200ms;" onfocus="this.style.borderColor='#C6A75E';this.style.background='#fff'" onblur="this.style.borderColor='rgba(0,0,0,0.10)';this.style.background='#F7F6F2'">
+              <option value="">Select time...</option>
+              <option value="10:00">10:00 AM</option><option value="11:00">11:00 AM</option>
+              <option value="12:00">12:00 PM</option><option value="14:00">2:00 PM</option>
+              <option value="15:00">3:00 PM</option><option value="16:00">4:00 PM</option>
+              <option value="17:00">5:00 PM</option><option value="18:00">6:00 PM</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" id="gl-booking-btn" style="width:100%;padding:16px;background:linear-gradient(135deg,#C6A75E,#D4B97A);color:#fff;border:none;border-radius:100px;font-family:'Inter',sans-serif;font-size:0.9375rem;font-weight:600;cursor:pointer;letter-spacing:0.03em;transition:all 300ms;display:flex;align-items:center;justify-content:center;gap:8px;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 12px 32px rgba(198,167,94,0.35)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+          Reserve My Session
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M8 3l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <p id="gl-booking-msg" style="text-align:center;margin-top:14px;font-size:0.8125rem;min-height:18px;color:#C6A75E;"></p>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+function glSubmitBooking(e) {
+  e.preventDefault();
+  var btn = document.getElementById('gl-booking-btn');
+  var msg = document.getElementById('gl-booking-msg');
+  var fd  = new FormData(e.target);
+  btn.disabled = true; btn.textContent = 'Sending…';
+  fetch('<?php echo esc_url(rest_url('glamlux/v1/leads')); ?>', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-WP-Nonce': '<?php echo wp_create_nonce("wp_rest"); ?>'},
+    body: JSON.stringify({ lead_type:'appointment', name: fd.get('name'), phone: fd.get('phone'), notes: 'Service: ' + fd.get('service') + ' | Date: ' + fd.get('date') + ' | Time: ' + fd.get('time') })
+  })
+  .then(r => r.json())
+  .then(d => {
+    btn.style.display = 'none';
+    msg.style.color = '#2ecc71';
+    msg.textContent = '✓ Appointment request sent! We will confirm your slot shortly.';
+  })
+  .catch(() => {
+    btn.disabled = false; btn.textContent = 'Reserve My Session';
+    msg.style.color = '#e74c3c';
+    msg.textContent = 'Something went wrong. Please call us directly.';
+  });
+}
+</script>
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+
 <?php wp_footer(); ?>
 
 <!-- ══ ANIMATION ENGINE ═══════════════════════════════════════════════════════ -->

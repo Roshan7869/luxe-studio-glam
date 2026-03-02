@@ -14,104 +14,104 @@ $hero_badge = get_theme_mod('glamlux_hero_badge', "India's Premier Luxury Beauty
 // ─── Fetch Services (DB → Fallback)
 $services_raw = get_transient('glamlux_fp_services_db');
 if (false === $services_raw) {
-    global $wpdb;
-    $t = $wpdb->prefix . 'gl_service_pricing';
-    if ($wpdb->get_var("SHOW TABLES LIKE '{$t}'") === $t) {
-        $services_raw = $wpdb->get_results(
-            "SELECT service_name as name, description, CONCAT('₹', CAST(base_price AS UNSIGNED)) as price_display, image_url FROM {$t} WHERE is_active=1 ORDER BY menu_order ASC LIMIT 6",
-            ARRAY_A
-        );
-    }
-    $services_raw = is_array($services_raw) ? $services_raw : [];
-    set_transient('glamlux_fp_services_db', $services_raw, 15 * MINUTE_IN_SECONDS);
+  global $wpdb;
+  $t = $wpdb->prefix . 'gl_service_pricing';
+  if ($wpdb->get_var("SHOW TABLES LIKE '{$t}'") === $t) {
+    $services_raw = $wpdb->get_results(
+      "SELECT service_name as name, description, CONCAT('₹', CAST(base_price AS UNSIGNED)) as price_display, image_url FROM {$t} WHERE is_active=1 ORDER BY menu_order ASC LIMIT 6",
+      ARRAY_A
+    );
+  }
+  $services_raw = is_array($services_raw) ? $services_raw : [];
+  set_transient('glamlux_fp_services_db', $services_raw, 15 * MINUTE_IN_SECONDS);
 }
 $fallback_services = [
-    ['name' => 'Skincare Rituals', 'description' => 'Bespoke facial treatments curated for every skin type by certified aestheticians.', 'price_display' => 'From ₹2,499', 'image_url' => 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=480&h=360&fit=crop&q=80', 'icon' => '✦'],
-    ['name' => 'Hair Couture', 'description' => 'Editorial cuts, colour transformations, and scalp therapies using premium produce.', 'price_display' => 'From ₹1,799', 'image_url' => 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=480&h=360&fit=crop&q=80', 'icon' => '◈'],
-    ['name' => 'Body Luxe Therapy', 'description' => 'Signature massage rituals and wraps designed to restore and rejuvenate completely.', 'price_display' => 'From ₹3,299', 'image_url' => 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=480&h=360&fit=crop&q=80', 'icon' => '❋'],
-    ['name' => 'Nail Atelier', 'description' => 'Precision nail artistry with exclusive gel collections and spa manicure finishing.', 'price_display' => 'From ₹799', 'image_url' => 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=480&h=360&fit=crop&q=80', 'icon' => '◇'],
-    ['name' => 'Bridal Intelligence', 'description' => 'Full-service bridal preparation designed for the most important day of your life.', 'price_display' => 'Custom', 'image_url' => 'https://images.unsplash.com/photo-1526045612212-70caf35c14df?w=480&h=360&fit=crop&q=80', 'icon' => '✿'],
-    ['name' => 'Franchise SaaS', 'description' => 'Manage multi-location operations from a single enterprise-grade beauty OS dashboard.', 'price_display' => 'Enterprise', 'image_url' => 'https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=480&h=360&fit=crop&q=80', 'icon' => '⬡'],
+  ['name' => 'Skincare Rituals', 'description' => 'Bespoke facial treatments curated for every skin type by certified aestheticians.', 'price_display' => 'From ₹2,499', 'image_url' => 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=480&h=360&fit=crop&q=80', 'icon' => '✦'],
+  ['name' => 'Hair Couture', 'description' => 'Editorial cuts, colour transformations, and scalp therapies using premium produce.', 'price_display' => 'From ₹1,799', 'image_url' => 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=480&h=360&fit=crop&q=80', 'icon' => '◈'],
+  ['name' => 'Body Luxe Therapy', 'description' => 'Signature massage rituals and wraps designed to restore and rejuvenate completely.', 'price_display' => 'From ₹3,299', 'image_url' => 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=480&h=360&fit=crop&q=80', 'icon' => '❋'],
+  ['name' => 'Nail Atelier', 'description' => 'Precision nail artistry with exclusive gel collections and spa manicure finishing.', 'price_display' => 'From ₹799', 'image_url' => 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=480&h=360&fit=crop&q=80', 'icon' => '◇'],
+  ['name' => 'Bridal Intelligence', 'description' => 'Full-service bridal preparation designed for the most important day of your life.', 'price_display' => 'Custom', 'image_url' => 'https://images.unsplash.com/photo-1526045612212-70caf35c14df?w=480&h=360&fit=crop&q=80', 'icon' => '✿'],
+  ['name' => 'Franchise SaaS', 'description' => 'Manage multi-location operations from a single enterprise-grade beauty OS dashboard.', 'price_display' => 'Enterprise', 'image_url' => 'https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=480&h=360&fit=crop&q=80', 'icon' => '⬡'],
 ];
 $services = !empty($services_raw) ? array_slice($services_raw, 0, 6) : $fallback_services;
 
 // ─── Fetch Salons
 $salons_raw = get_transient('glamlux_fp_salons_db');
 if (false === $salons_raw) {
-    global $wpdb;
-    $t = $wpdb->prefix . 'gl_salons';
-    if ($wpdb->get_var("SHOW TABLES LIKE '{$t}'") === $t) {
-        $salons_raw = $wpdb->get_results(
-            "SELECT name, address, interior_image_url as image_url FROM {$t} WHERE is_active=1 ORDER BY id ASC LIMIT 6",
-            ARRAY_A
-        );
-    }
-    $salons_raw = is_array($salons_raw) ? $salons_raw : [];
-    set_transient('glamlux_fp_salons_db', $salons_raw, 15 * MINUTE_IN_SECONDS);
+  global $wpdb;
+  $t = $wpdb->prefix . 'gl_salons';
+  if ($wpdb->get_var("SHOW TABLES LIKE '{$t}'") === $t) {
+    $salons_raw = $wpdb->get_results(
+      "SELECT name, address, interior_image_url as image_url FROM {$t} WHERE is_active=1 ORDER BY id ASC LIMIT 6",
+      ARRAY_A
+    );
+  }
+  $salons_raw = is_array($salons_raw) ? $salons_raw : [];
+  set_transient('glamlux_fp_salons_db', $salons_raw, 15 * MINUTE_IN_SECONDS);
 }
 $salons = !empty($salons_raw) ? $salons_raw : [];
 
 // ─── Fetch Staff
 $staff_raw = get_transient('glamlux_fp_staff_db');
 if (false === $staff_raw) {
-    global $wpdb;
-    $ts = $wpdb->prefix . 'gl_staff';
-    $tl = $wpdb->prefix . 'gl_salons';
-    if ($wpdb->get_var("SHOW TABLES LIKE '{$ts}'") === $ts) {
-        $staff_raw = $wpdb->get_results(
-            "SELECT u.display_name AS full_name, s.job_role AS role, s.profile_image_url as image_url, l.name as salon_name FROM {$ts} s LEFT JOIN {$wpdb->users} u ON s.wp_user_id=u.ID LEFT JOIN {$tl} l ON s.salon_id=l.id WHERE s.is_active=1 ORDER BY s.id ASC LIMIT 6",
-            ARRAY_A
-        );
-    }
-    $staff_raw = is_array($staff_raw) ? $staff_raw : [];
-    set_transient('glamlux_fp_staff_db', $staff_raw, 15 * MINUTE_IN_SECONDS);
+  global $wpdb;
+  $ts = $wpdb->prefix . 'gl_staff';
+  $tl = $wpdb->prefix . 'gl_salons';
+  if ($wpdb->get_var("SHOW TABLES LIKE '{$ts}'") === $ts) {
+    $staff_raw = $wpdb->get_results(
+      "SELECT u.display_name AS full_name, s.job_role AS role, s.profile_image_url as image_url, l.name as salon_name FROM {$ts} s LEFT JOIN {$wpdb->users} u ON s.wp_user_id=u.ID LEFT JOIN {$tl} l ON s.salon_id=l.id WHERE s.is_active=1 ORDER BY s.id ASC LIMIT 6",
+      ARRAY_A
+    );
+  }
+  $staff_raw = is_array($staff_raw) ? $staff_raw : [];
+  set_transient('glamlux_fp_staff_db', $staff_raw, 15 * MINUTE_IN_SECONDS);
 }
 $staff = !empty($staff_raw) ? $staff_raw : [];
 
 // ─── Fetch Memberships
 $memberships_raw = get_transient('glamlux_fp_memberships_db');
 if (false === $memberships_raw) {
-    global $wpdb;
-    $t = $wpdb->prefix . 'gl_memberships';
-    if ($wpdb->get_var("SHOW TABLES LIKE '{$t}'") === $t) {
-        $memberships_raw = $wpdb->get_results(
-            "SELECT name as tier_name, tier_level, benefits, price as price_monthly, banner_image_url FROM {$t} WHERE is_active=1 ORDER BY price ASC LIMIT 3",
-            ARRAY_A
-        );
-    }
-    $memberships_raw = is_array($memberships_raw) ? $memberships_raw : [];
-    set_transient('glamlux_fp_memberships_db', $memberships_raw, 15 * MINUTE_IN_SECONDS);
+  global $wpdb;
+  $t = $wpdb->prefix . 'gl_memberships';
+  if ($wpdb->get_var("SHOW TABLES LIKE '{$t}'") === $t) {
+    $memberships_raw = $wpdb->get_results(
+      "SELECT name as tier_name, tier_level, benefits, price as price_monthly, banner_image_url FROM {$t} WHERE is_active=1 ORDER BY price ASC LIMIT 3",
+      ARRAY_A
+    );
+  }
+  $memberships_raw = is_array($memberships_raw) ? $memberships_raw : [];
+  set_transient('glamlux_fp_memberships_db', $memberships_raw, 15 * MINUTE_IN_SECONDS);
 }
 $memberships = !empty($memberships_raw) ? $memberships_raw : [];
 
 // ─── Fetch Franchises
 $franchises_raw = get_transient('glamlux_fp_franchises_db');
 if (false === $franchises_raw) {
-    global $wpdb;
-    $t = $wpdb->prefix . 'gl_franchises';
-    if ($wpdb->get_var("SHOW TABLES LIKE '{$t}'") === $t) {
-        $franchises_raw = $wpdb->get_results(
-            "SELECT owner_name, email, phone, location, status FROM {$t} WHERE status IN ('active','pending') ORDER BY id DESC LIMIT 6",
-            ARRAY_A
-        );
-    }
-    $franchises_raw = is_array($franchises_raw) ? $franchises_raw : [];
-    set_transient('glamlux_fp_franchises_db', $franchises_raw, 15 * MINUTE_IN_SECONDS);
+  global $wpdb;
+  $t = $wpdb->prefix . 'gl_franchises';
+  if ($wpdb->get_var("SHOW TABLES LIKE '{$t}'") === $t) {
+    $franchises_raw = $wpdb->get_results(
+      "SELECT owner_name, email, phone, location, status FROM {$t} WHERE status IN ('active','pending') ORDER BY id DESC LIMIT 6",
+      ARRAY_A
+    );
+  }
+  $franchises_raw = is_array($franchises_raw) ? $franchises_raw : [];
+  set_transient('glamlux_fp_franchises_db', $franchises_raw, 15 * MINUTE_IN_SECONDS);
 }
 $franchises = !empty($franchises_raw) ? $franchises_raw : [];
 
 // ─── Testimonials
 $testimonials = [
-    ['text' => 'Walking into GlamLux2Lux feels like stepping into a different world. The staff, the rituals, the attention to detail — nothing else comes close.', 'author' => 'Priya M.', 'location' => 'Mumbai'],
-    ['text' => 'As a franchise owner, the SaaS dashboard has transformed how I run three locations. Real-time data, zero guesswork.', 'author' => 'Rahul S.', 'location' => 'Bangalore'],
-    ['text' => 'My bridal experience was beyond a dream. Every detail was personalised, every moment felt like luxury perfected.', 'author' => 'Ananya D.', 'location' => 'Delhi'],
+  ['text' => 'Walking into GlamLux2Lux feels like stepping into a different world. The staff, the rituals, the attention to detail — nothing else comes close.', 'author' => 'Priya M.', 'location' => 'Mumbai'],
+  ['text' => 'As a franchise owner, the SaaS dashboard has transformed how I run three locations. Real-time data, zero guesswork.', 'author' => 'Rahul S.', 'location' => 'Bangalore'],
+  ['text' => 'My bridal experience was beyond a dream. Every detail was personalised, every moment felt like luxury perfected.', 'author' => 'Ananya D.', 'location' => 'Delhi'],
 ];
 
 $stats = [
-    ['num' => '500+', 'label' => 'Franchise Locations', 'icon' => '◈'],
-    ['num' => '1.2M', 'label' => 'Satisfied Clients', 'icon' => '✦'],
-    ['num' => '18', 'label' => 'States Covered', 'icon' => '◇'],
-    ['num' => '99.9%', 'label' => 'SaaS Uptime', 'icon' => '❋'],
+  ['num' => '500+', 'label' => 'Franchise Locations', 'icon' => '◈'],
+  ['num' => '1.2M', 'label' => 'Satisfied Clients', 'icon' => '✦'],
+  ['num' => '18', 'label' => 'States Covered', 'icon' => '◇'],
+  ['num' => '99.9%', 'label' => 'SaaS Uptime', 'icon' => '❋'],
 ];
 ?>
 
@@ -331,11 +331,11 @@ $stats = [
 
     <!-- Actions -->
     <div id="hero-actions" style="display:flex;gap:14px;flex-wrap:wrap;opacity:0;transform:translateY(20px);">
-      <a href="javascript:void(0)" data-gl-modal="booking" class="gl-btn-gold" style="animation:gl-pulse-glow 4s ease-in-out infinite;">
+      <a href="javascript:void(0)" data-gl-modal="booking" class="gl-btn-gold" style="animation:gl-pulse-glow 4s ease-in-out infinite;" onclick="document.getElementById('gl-booking-modal').style.display='flex';return false;">
         Book Appointment
         <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M3 7.5h9M7.5 3l4.5 4.5-4.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </a>
-      <a href="<?php echo esc_url(home_url('/franchise')); ?>" class="gl-btn-ghost-light">
+      <a href="<?php echo esc_url(home_url('/franchise-enquiry')); ?>" class="gl-btn-ghost-light">
         Own a Franchise
       </a>
     </div>
@@ -398,10 +398,10 @@ endforeach; ?>
     <!-- Lean horizontal row -->
     <div class="gl-services-scroll" id="gl-services-row">
       <?php foreach ($services as $svc):
-    $name = $svc['name'] ?? $svc['post_title'] ?? 'Service';
-    $desc = $svc['description'] ?? $svc['post_excerpt'] ?? '';
-    $price = $svc['price_display'] ?? (isset($svc['price']) ? '₹' . number_format($svc['price']) : '');
-    $icon = $svc['icon'] ?? '✦';
+  $name = $svc['name'] ?? $svc['post_title'] ?? 'Service';
+  $desc = $svc['description'] ?? $svc['post_excerpt'] ?? '';
+  $price = $svc['price_display'] ?? (isset($svc['price']) ? '₹' . number_format($svc['price']) : '');
+  $icon = $svc['icon'] ?? '✦';
 ?>
       <div class="gl-service-card" onclick="glamluxOpenModal('booking')">
         <div class="gl-service-icon"><?php echo $icon; ?></div>
@@ -410,7 +410,7 @@ endforeach; ?>
         <?php if ($price): ?>
         <div style="font-size:0.8125rem;font-weight:600;color:var(--gold);"><?php echo esc_html($price); ?></div>
         <?php
-    endif; ?>
+  endif; ?>
       </div>
       <?php
 endforeach; ?>
@@ -462,7 +462,7 @@ endfor; ?>
         </div>
       </article>
       <?php
-    endforeach; ?>
+  endforeach; ?>
     </div>
 
     <div style="text-align:center;margin-top:44px;">
@@ -506,7 +506,7 @@ endif; ?>
         <p style="font-size:0.75rem;color:var(--text-muted);"><?php echo esc_html($person['salon_name'] ?? ''); ?></p>
       </article>
       <?php
-    endforeach; ?>
+  endforeach; ?>
     </div>
 
     <div style="text-align:center;margin-top:44px;">
@@ -537,7 +537,7 @@ endif; ?>
 
     <div class="gl-membership-grid">
       <?php foreach ($memberships as $idx => $plan):
-        $featured = ($idx === 1);
+    $featured = ($idx === 1);
 ?>
       <article style="
         background:<?php echo $featured ? 'var(--dark)' : '#fff'; ?>;
@@ -553,7 +553,7 @@ endif; ?>
         <?php if ($featured): ?>
         <div style="position:absolute;top:18px;right:18px;background:var(--gold);color:#fff;font-size:0.5625rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:5px 12px;border-radius:9999px;">Most Popular</div>
         <?php
-        endif; ?>
+    endif; ?>
         <!-- Gold accent line -->
         <div style="width:32px;height:2px;background:var(--gold);border-radius:2px;margin-bottom:24px;"></div>
         <h3 style="font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;margin-bottom:14px;"><?php echo esc_html($plan['tier_name']); ?></h3>
@@ -575,7 +575,7 @@ endif; ?>
         </a>
       </article>
       <?php
-    endforeach; ?>
+  endforeach; ?>
     </div>
 
   </div>
@@ -642,11 +642,11 @@ endforeach; ?>
           <?php if (!empty($fr['phone'])): ?>
           <span style="font-size:0.8125rem;color:var(--text-secondary);">📞 <?php echo esc_html($fr['phone']); ?></span>
           <?php
-        endif; ?>
+    endif; ?>
         </div>
       </article>
       <?php
-    endforeach; ?>
+  endforeach; ?>
     </div>
 
   </div>
@@ -672,7 +672,7 @@ endif; ?>
     <p style="font-size:1.0625rem;color:rgba(255,255,255,0.58);line-height:1.75;margin-bottom:44px;max-width:500px;margin-left:auto;margin-right:auto;">
       Join India's fastest-growing luxury beauty franchise network. Enterprise SaaS tools, proven brand, and full operational support from day one.
     </p>
-    <a href="<?php echo esc_url(home_url('/franchise/apply')); ?>" class="gl-btn-gold" style="font-size:0.9375rem;padding:17px 38px;animation:gl-pulse-glow 4s ease-in-out infinite;">
+    <a href="<?php echo esc_url(home_url('/franchise-enquiry')); ?>" class="gl-btn-gold" style="font-size:0.9375rem;padding:17px 38px;animation:gl-pulse-glow 4s ease-in-out infinite;">
       Apply for Franchise
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M8 3l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </a>
@@ -702,8 +702,8 @@ endif; ?>
         <select name="service_id" required class="gl-input">
           <option value="">Select a service…</option>
           <?php foreach ($services as $svc):
-    $id = $svc['id'] ?? $svc['ID'] ?? '';
-    $name = $svc['name'] ?? $svc['post_title'] ?? '';
+  $id = $svc['id'] ?? $svc['ID'] ?? '';
+  $name = $svc['name'] ?? $svc['post_title'] ?? '';
 ?>
           <option value="<?php echo esc_attr($id); ?>"><?php echo esc_html($name); ?></option>
           <?php
