@@ -45,6 +45,21 @@ function glamlux_ajax_response($success, $message, $data = array(), $code = 200)
 	}
 }
 
+add_action('init', 'glamlux_emergency_homepage_recovery');
+function glamlux_emergency_homepage_recovery()
+{
+	if (get_option('show_on_front') !== 'page' || !get_post(get_option('page_on_front'))) {
+		$home_id = wp_insert_post([
+			'post_title' => 'Home',
+			'post_name' => 'home',
+			'post_status' => 'publish',
+			'post_type' => 'page',
+		]);
+		update_option('show_on_front', 'page');
+		update_option('page_on_front', $home_id);
+	}
+}
+
 function glamlux_inject_js_config()
 {
 	$config = array(
