@@ -1,8 +1,13 @@
 <?php
 
-$site_url = 'https://luxe-studio-glam-production.up.railway.app';
-$username = 'glamlux_admin';
-$password = 'GlamLux@2026#';
+$site_url = 'https://' . (getenv('AUDIT_HOST') ?: 'luxe-studio-glam-production.up.railway.app');
+$username = getenv('AUDIT_USER');
+$password = getenv('AUDIT_PASSWORD');
+
+if (!$username || !$password) {
+    echo "ERROR: AUDIT_USER and AUDIT_PASSWORD environment variables must be set.\n";
+    exit(1);
+}
 
 echo "Logging into remotely deployed WordPress enterprise portal at $site_url...\n";
 

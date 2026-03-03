@@ -17,7 +17,8 @@ $fc_url = get_theme_mod('glamlux_franchise_cta_url', '/franchise');
 $site_name = get_bloginfo('name');
 
 // ─── Fetch services directly from DB (with fallback static data)
-$services_raw = get_transient('glamlux_fp_services_db');
+$cache_key = 'glamlux_fp_services_db_blog_' . get_current_blog_id();
+$services_raw = get_transient($cache_key);
 if (false === $services_raw) {
     global $wpdb;
     $table_name = $wpdb->prefix . 'gl_service_pricing';
@@ -43,7 +44,7 @@ if (false === $services_raw) {
     }
 
     // Cache for 15 minutes
-    set_transient('glamlux_fp_services_db', $services_raw, 15 * MINUTE_IN_SECONDS);
+    set_transient($cache_key, $services_raw, 15 * MINUTE_IN_SECONDS);
 }
 
 $fallback_services = array(

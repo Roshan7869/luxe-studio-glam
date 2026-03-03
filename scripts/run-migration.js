@@ -1,9 +1,14 @@
 const https = require('https');
 const querystring = require('querystring');
 
-const URL = 'luxe-studio-glam-production.up.railway.app';
-const USERNAME = 'glamlux_admin';
-const PASSWORD = 'GlamLux@2026#';
+const URL = process.env.MIGRATION_HOST || 'luxe-studio-glam-production.up.railway.app';
+const USERNAME = process.env.MIGRATION_USER;
+const PASSWORD = process.env.MIGRATION_PASSWORD;
+
+if (!USERNAME || !PASSWORD) {
+    console.error('ERROR: MIGRATION_USER and MIGRATION_PASSWORD environment variables must be set.');
+    process.exit(1);
+}
 
 async function req(options, postData = null) {
     return new Promise((resolve, reject) => {

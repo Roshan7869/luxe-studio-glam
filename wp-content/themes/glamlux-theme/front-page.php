@@ -12,7 +12,8 @@ $hero_subtitle = get_theme_mod('glamlux_hero_subtitle', 'Seamless luxury beauty 
 $hero_badge = get_theme_mod('glamlux_hero_badge', "India's Premier Luxury Beauty Franchise");
 
 // ─── Fetch Services (DB → Fallback)
-$services_raw = get_transient('glamlux_fp_services_db');
+$cache_key = 'glamlux_fp_services_db_blog_' . get_current_blog_id();
+$services_raw = get_transient($cache_key);
 if (false === $services_raw) {
   global $wpdb;
   $t = $wpdb->prefix . 'gl_service_pricing';
@@ -23,7 +24,7 @@ if (false === $services_raw) {
     );
   }
   $services_raw = is_array($services_raw) ? $services_raw : [];
-  set_transient('glamlux_fp_services_db', $services_raw, 15 * MINUTE_IN_SECONDS);
+  set_transient($cache_key, $services_raw, 15 * MINUTE_IN_SECONDS);
 }
 $fallback_services = [
   ['name' => 'Skincare Rituals', 'description' => 'Bespoke facial treatments curated for every skin type by certified aestheticians.', 'price_display' => 'From ₹2,499', 'image_url' => 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=480&h=360&fit=crop&q=80', 'icon' => '✦'],

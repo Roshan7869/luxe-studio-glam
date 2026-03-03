@@ -88,7 +88,7 @@ class GlamLux_Inventory_Controller extends GlamLux_Base_Controller
         if (!$id)
             return new WP_Error('db_error', 'Failed to create item', ['status' => 500]);
 
-        delete_transient("gl_inv_" . $request->get_param('salon_id'));
+        delete_transient("gl_inv_" . $request->get_param('salon_id') . '_blog_' . get_current_blog_id());
         return rest_ensure_response(['id' => $id]);
     }
 

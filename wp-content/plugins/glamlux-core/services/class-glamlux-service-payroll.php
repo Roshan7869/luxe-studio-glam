@@ -5,7 +5,7 @@ class GlamLux_Service_Payroll {
 		$this->repo = $repo ?: new GlamLux_Repo_Payroll();
 	}
 	public function run_monthly_batch($ps, $pe, $sid = 0) {
-		$key = "payroll_{$ps}_{$pe}_{$sid}";
+		$key = "payroll_{$ps}_{$pe}_{$sid}_blog_" . get_current_blog_id();
 		if (get_transient($key)) return ["status" => "already_ran"];
 		$staff = $this->repo->get_present_staff($sid);
 		$c = 0;

@@ -61,6 +61,10 @@ class GlamLux_Cron
 			'interval' => 30 * DAY_IN_SECONDS, // Kept for interval API compatibility; payroll uses single events instead
 			'display' => __('Once Monthly', 'glamlux-core'),
 		);
+		$schedules['every_minute'] = array(
+			'interval' => 60,
+			'display' => __('Every Minute', 'glamlux-core'),
+		);
 		return $schedules;
 	}
 

@@ -46,11 +46,11 @@ class GlamLux_SchemaHealth
 	public static function validate_schema($force_refresh = false)
 	{
 		if ($force_refresh) {
-			delete_transient(self::TRANSIENT_KEY);
-			delete_transient('gl_operations_summary');
+			delete_transient(self::TRANSIENT_KEY . '_blog_' . get_current_blog_id());
+			delete_transient('gl_operations_summary_blog_' . get_current_blog_id());
 		}
 		if (!$force_refresh) {
-			$cached = get_transient(self::TRANSIENT_KEY);
+			$cached = get_transient(self::TRANSIENT_KEY . '_blog_' . get_current_blog_id());
 			if (false !== $cached && is_array($cached)) {
 				return $cached;
 			}
@@ -128,7 +128,7 @@ class GlamLux_SchemaHealth
 			);
 		}
 
-		set_transient(self::TRANSIENT_KEY, $report, self::CACHE_TTL);
+		set_transient(self::TRANSIENT_KEY . '_blog_' . get_current_blog_id(), $report, self::CACHE_TTL);
 
 		return $report;
 	}

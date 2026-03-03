@@ -131,6 +131,9 @@ function run_glamlux_core()
 	require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-cron.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-ajax.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-site-provisioner.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-jwt-auth.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-rate-limiter.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-shortcodes.php';
 	if (defined('WP_CLI') && WP_CLI) {
 		require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-cli-health.php';
 	}
@@ -192,6 +195,7 @@ function run_glamlux_core()
 	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-service-inventory.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-service-gdpr.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-service-operations.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-async-dispatcher.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-event-listeners.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-mailer.php';
 
@@ -253,6 +257,11 @@ function run_glamlux_core()
 	new GlamLux_AJAX();
 	new GlamLux_Site_Provisioner();
 	new GlamLux_REST_Manager();
+	new GlamLux_Rate_Limiter();
+	new GlamLux_Shortcodes();
+
+	// Register async notification queue cron hook
+	add_action(GlamLux_Async_Dispatcher::CRON_HOOK, ['GlamLux_Async_Dispatcher', 'process_queue']);
 	new GlamLux_Appointments();
 	new GlamLux_Franchises();
 	new GlamLux_Services_Admin();

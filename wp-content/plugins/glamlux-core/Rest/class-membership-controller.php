@@ -29,11 +29,12 @@ class GlamLux_Membership_Controller extends GlamLux_Base_Controller
     }
     public function get_tiers($request)
     {
-        $cache = get_transient('gl_mem_tiers');
+        $cache_key = 'gl_mem_tiers_blog_' . get_current_blog_id();
+        $cache = get_transient($cache_key);
         if (false === $cache) {
             $repo = new GlamLux_Repo_Membership();
             $cache = method_exists($repo, 'get_active_tiers') ? $repo->get_active_tiers() : [];
-            set_transient('gl_mem_tiers', $cache, HOUR_IN_SECONDS);
+            set_transient($cache_key, $cache, HOUR_IN_SECONDS);
         }
         return rest_ensure_response($cache);
     }

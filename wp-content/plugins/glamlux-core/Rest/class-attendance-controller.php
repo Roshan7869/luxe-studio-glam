@@ -105,7 +105,7 @@ class GlamLux_Attendance_Controller extends GlamLux_Base_Controller
             return new WP_Error('already_checked_in', 'Staff member has already checked in today.', ['status' => 409]);
         }
 
-        delete_transient("gl_att_{$salon_id}_" . date('Ymd'));
+        delete_transient("gl_att_{$salon_id}_" . date('Ymd') . '_blog_' . get_current_blog_id());
         return rest_ensure_response(['success' => true, 'message' => 'Checked in successfully.']);
     }
 

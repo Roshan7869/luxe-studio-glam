@@ -96,8 +96,10 @@ class GlamLux_Service_Booking
 				'notes' => sanitize_text_field($notes),
 			]);
 
-			if (!$id) {
-				throw new Exception('Failed to create booking.');
+			// Check for WP_Error or failed insert
+			if (is_wp_error($id) || !$id) {
+				$error_msg = is_wp_error($id) ? $id->get_error_message() : 'Failed to create booking.';
+				throw new Exception($error_msg);
 			}
 
 			$this->repo->transaction_commit();
@@ -107,8 +109,7 @@ class GlamLux_Service_Booking
 			$this->repo->transaction_rollback();
 
 			// If it's the expected WPDB constraint collision (MySQL 1062)
-			global $wpdb;
-			if ($wpdb->last_error && strpos($wpdb->last_error, 'Duplicate entry') !== false) {
+			if ($this->repo->is_duplicate_entry_error()) {
 				return new WP_Error('booking_failed', 'Slot already taken (concurrency blocked).', ['status' => 409]);
 			}
 

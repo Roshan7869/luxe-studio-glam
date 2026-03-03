@@ -11,7 +11,8 @@ class GlamLux_Service_Controller extends GlamLux_Base_Controller
 	}
 	public function get_services($request)
 	{
-		$cached = get_transient('glamlux_cached_services');
+		$cache_key = 'glamlux_cached_services_blog_' . get_current_blog_id();
+		$cached = get_transient($cache_key);
 		if ($cached !== false)
 			return rest_ensure_response($cached);
 
@@ -19,7 +20,7 @@ class GlamLux_Service_Controller extends GlamLux_Base_Controller
 		$services = $repo->get_active_services();
 
 		if (!empty($services)) {
-			set_transient('glamlux_cached_services', $services, 300);
+			set_transient($cache_key, $services, 300);
 		}
 		return rest_ensure_response($services);
 	}

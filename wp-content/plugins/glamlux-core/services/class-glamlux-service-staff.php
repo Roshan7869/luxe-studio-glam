@@ -87,8 +87,8 @@ class GlamLux_Service_Staff
         }
 
         // Purge cache
-        delete_transient('gl_api_staff_profiles_0');
-        delete_transient('gl_api_staff_profiles_' . (int)$data['salon_id']);
+        delete_transient('gl_api_staff_profiles_0_blog_' . get_current_blog_id());
+        delete_transient('gl_api_staff_profiles_' . (int)$data['salon_id'] . '_blog_' . get_current_blog_id());
 
         return $id;
     }
@@ -114,8 +114,8 @@ class GlamLux_Service_Staff
         $success = $this->repo->update($id, $update);
 
         // Purge cache
-        delete_transient('gl_api_staff_profiles_0');
-        delete_transient('gl_api_staff_profiles_' . $staff['salon_id']);
+        delete_transient('gl_api_staff_profiles_0_blog_' . get_current_blog_id());
+        delete_transient('gl_api_staff_profiles_' . $staff['salon_id'] . '_blog_' . get_current_blog_id());
 
         return $success;
     }
@@ -134,8 +134,8 @@ class GlamLux_Service_Staff
         $success = $this->repo->deactivate($id);
 
         // Purge cache
-        delete_transient('gl_api_staff_profiles_0');
-        delete_transient('gl_api_staff_profiles_' . $staff['salon_id']);
+        delete_transient('gl_api_staff_profiles_0_blog_' . get_current_blog_id());
+        delete_transient('gl_api_staff_profiles_' . $staff['salon_id'] . '_blog_' . get_current_blog_id());
 
         return $success;
     }

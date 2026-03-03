@@ -11,7 +11,8 @@ class GlamLux_Salon_Controller extends GlamLux_Base_Controller
 	}
 	public function get_salons($request)
 	{
-		$cached = get_transient('glamlux_cached_salons');
+		$cache_key = 'glamlux_cached_salons_blog_' . get_current_blog_id();
+		$cached = get_transient($cache_key);
 		if ($cached !== false)
 			return rest_ensure_response($cached);
 
@@ -19,7 +20,7 @@ class GlamLux_Salon_Controller extends GlamLux_Base_Controller
 		$salons = $repo->get_active_salons();
 
 		if (!empty($salons)) {
-			set_transient('glamlux_cached_salons', $salons, 300);
+			set_transient($cache_key, $salons, 300);
 		}
 		return rest_ensure_response($salons);
 	}

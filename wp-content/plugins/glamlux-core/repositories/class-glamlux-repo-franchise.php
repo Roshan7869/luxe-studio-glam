@@ -16,7 +16,8 @@ class GlamLux_Repo_Franchise
     public function get_active_salons(): array
     {
         global $wpdb;
-        $cached = get_transient('gl_active_salons');
+        $cache_key = 'gl_active_salons_blog_' . get_current_blog_id();
+        $cached = get_transient($cache_key);
         if (false !== $cached)
             return $cached;
 
@@ -28,7 +29,7 @@ class GlamLux_Repo_Franchise
             ARRAY_A
         ) ?: [];
 
-        set_transient('gl_active_salons', $result, 5 * MINUTE_IN_SECONDS);
+        set_transient($cache_key, $result, 5 * MINUTE_IN_SECONDS);
         return $result;
     }
 
@@ -59,7 +60,7 @@ class GlamLux_Repo_Franchise
     public function insert_salon(array $data): int
     {
         global $wpdb;
-        delete_transient('gl_active_salons');
+        delete_transient('gl_active_salons_blog_' . get_current_blog_id());
         $wpdb->insert($wpdb->prefix . 'gl_salons', array_merge($data, [
             'created_at' => current_time('mysql'),
         ]));
@@ -69,7 +70,7 @@ class GlamLux_Repo_Franchise
     public function update_salon(int $id, array $data): bool
     {
         global $wpdb;
-        delete_transient('gl_active_salons');
+        delete_transient('gl_active_salons_blog_' . get_current_blog_id());
         return false !== $wpdb->update($wpdb->prefix . 'gl_salons', $data, ['id' => $id]);
     }
 
@@ -80,7 +81,8 @@ class GlamLux_Repo_Franchise
     public function get_active_services(): array
     {
         global $wpdb;
-        $cached = get_transient('gl_active_services');
+        $cache_key = 'gl_active_services_blog_' . get_current_blog_id();
+        $cached = get_transient($cache_key);
         if (false !== $cached)
             return $cached;
 
@@ -92,7 +94,7 @@ class GlamLux_Repo_Franchise
             ARRAY_A
         ) ?: [];
 
-        set_transient('gl_active_services', $result, 5 * MINUTE_IN_SECONDS);
+        set_transient($cache_key, $result, 5 * MINUTE_IN_SECONDS);
         return $result;
     }
 

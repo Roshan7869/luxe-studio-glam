@@ -49,7 +49,7 @@ class GlamLux_Service_Revenue
 	 */
 	public function get_period_summary(string $date_from, string $date_to): array
 	{
-		$cache_key = 'gl_period_summary_' . md5($date_from . $date_to);
+		$cache_key = 'gl_period_summary_' . md5($date_from . $date_to) . '_blog_' . get_current_blog_id();
 		$cached = get_transient($cache_key);
 		if ($cached !== false) {
 			return $cached;
@@ -71,7 +71,7 @@ class GlamLux_Service_Revenue
 	 */
 	public function get_monthly_trend(int $months = 6): array
 	{
-		$cache_key = 'gl_monthly_trend_' . $months;
+		$cache_key = 'gl_monthly_trend_' . $months . '_blog_' . get_current_blog_id();
 		$cached = get_transient($cache_key);
 		if ($cached !== false) {
 			return $cached;
@@ -97,7 +97,7 @@ class GlamLux_Service_Revenue
 	 */
 	public function get_revenue_by_salon(string $date_from, string $date_to): array
 	{
-		$cache_key = 'gl_rev_by_salon_' . md5($date_from . $date_to);
+		$cache_key = 'gl_rev_by_salon_' . md5($date_from . $date_to) . '_blog_' . get_current_blog_id();
 		$cached = get_transient($cache_key);
 		if ($cached !== false) {
 			return $cached;

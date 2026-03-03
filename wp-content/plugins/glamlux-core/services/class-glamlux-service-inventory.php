@@ -33,28 +33,7 @@ class GlamLux_Service_Inventory
             }
         }
 
-        global $wpdb;
-        $result = $wpdb->insert(
-            $wpdb->prefix . 'gl_inventory',
-        [
-            'salon_id' => absint($data['salon_id']),
-            'product_name' => sanitize_text_field($data['product_name']),
-            'sku' => sanitize_text_field($data['sku'] ?? ''),
-            'category' => sanitize_text_field($data['category'] ?? 'general'),
-            'quantity' => absint($data['quantity'] ?? 0),
-            'reorder_threshold' => absint($data['reorder_threshold'] ?? 5),
-            'unit_cost' => floatval($data['unit_cost'] ?? 0),
-            'price_per_unit' => floatval($data['price_per_unit'] ?? 0),
-            'last_restocked' => current_time('mysql'),
-        ],
-        ['%d', '%s', '%s', '%s', '%d', '%d', '%f', '%f', '%s']
-        );
-
-        if (!$result) {
-            return new \WP_Error('db_error', 'Failed to add inventory item.');
-        }
-
-        return $wpdb->insert_id;
+        return $this->repo->add_item($data);
     }
 
     /**
@@ -62,34 +41,7 @@ class GlamLux_Service_Inventory
      */
     public function update_item(int $item_id, array $data): bool
     {
-        global $wpdb;
-        $update = [];
-        $formats = [];
-
-        $allowed = [
-            'product_name' => '%s', 'sku' => '%s', 'category' => '%s',
-            'quantity' => '%d', 'reorder_threshold' => '%d',
-            'unit_cost' => '%f', 'price_per_unit' => '%f',
-        ];
-
-        foreach ($allowed as $col => $fmt) {
-            if (isset($data[$col])) {
-                $update[$col] = in_array($fmt, ['%d']) ? absint($data[$col]) :
-                    (in_array($fmt, ['%f']) ? floatval($data[$col]) : sanitize_text_field($data[$col]));
-                $formats[] = $fmt;
-            }
-        }
-
-        if (empty($update))
-            return false;
-
-        return false !== $wpdb->update(
-            $wpdb->prefix . 'gl_inventory',
-            $update,
-        ['id' => $item_id],
-            $formats,
-        ['%d']
-        );
+        return $this->repo->update_item($item_id, $data);
     }
 
     /**
@@ -111,13 +63,12 @@ class GlamLux_Service_Inventory
             return false;
         $result = $this->repo->deduct($item_id, $qty);
 
+        if (is_wp_error($result)) {
+            return false;
+        }
+
         // Trigger low stock check after deduction
-        global $wpdb;
-        $item = $wpdb->get_row($wpdb->prepare(
-            "SELECT i.*, s.name AS salon_name FROM {$wpdb->prefix}gl_inventory i
-             LEFT JOIN {$wpdb->prefix}gl_salons s ON i.salon_id = s.id
-             WHERE i.id = %d", $item_id
-        ), ARRAY_A);
+        $item = $this->repo->get_item_with_salon($item_id);
 
         if ($item && (int)$item['quantity'] <= (int)$item['reorder_threshold']) {
             do_action('glamlux_low_inventory_alert', $item);
@@ -131,12 +82,7 @@ class GlamLux_Service_Inventory
      */
     public function delete_item(int $item_id): bool
     {
-        global $wpdb;
-        return false !== $wpdb->delete(
-            $wpdb->prefix . 'gl_inventory',
-        ['id' => $item_id],
-        ['%d']
-        );
+        return $this->repo->delete_item($item_id);
     }
 
     /**

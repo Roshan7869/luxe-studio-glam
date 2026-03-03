@@ -23,7 +23,7 @@ class GlamLux_Service_Operations
 	 */
 	public function get_operations_summary()
 	{
-		$cache_key = 'glamlux_ops_summary_v1';
+		$cache_key = 'glamlux_ops_summary_v1_blog_' . get_current_blog_id();
 		$cached = get_transient($cache_key);
 		if (false !== $cached && is_array($cached)) {
 			return $cached;

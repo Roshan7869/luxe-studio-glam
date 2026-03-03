@@ -82,6 +82,7 @@ html.lenis body {
     html {
         scroll-behavior: auto;
     }
+
     *,
     *::before,
     *::after {
@@ -875,4 +876,42 @@ img {
 
 .bg-white {
     background: var(--gl-bg-white);
+}
+
+/* ─── 22. Mobile Enhancements (Sprint B) ───────────────────────────────────── */
+@media (max-width: 768px) {
+
+    /* Improve touch targets for mobile accessibility */
+    button,
+    .gl-btn,
+    .glamlux-btn,
+    .gl-nav-links a,
+    input[type="submit"] {
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Fix modal padding and safe areas */
+    .gl-modal-content,
+    .glamlux-modal {
+        padding: 24px 16px !important;
+        width: 95% !important;
+        max-height: 90vh;
+        overflow-y: auto;
+        border-radius: 12px;
+    }
+
+    /* Adjust inputs to prevent iOS zoom */
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="date"],
+    input[type="datetime-local"],
+    select,
+    textarea {
+        font-size: 16px !important;
+        min-height: 48px;
+    }
 }

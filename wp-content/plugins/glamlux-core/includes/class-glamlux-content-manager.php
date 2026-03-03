@@ -231,26 +231,28 @@ class GlamLux_Content_Manager {
 
 	public function sync_announcement( $post_id, $post ) {
 		if ( 'publish' !== $post->post_status ) return;
-		delete_transient('gl_announcements_cache');
+		delete_transient('gl_announcements_cache_blog_' . get_current_blog_id());
 		do_action('glamlux_announcement_published', $post_id, get_post_meta($post_id,'_gl_franchise_id',true));
 	}
 	public function sync_offer( $post_id, $post ) {
 		if ( 'publish' !== $post->post_status ) return;
-		delete_transient('gl_offers_cache');
+		delete_transient('gl_offers_cache_blog_' . get_current_blog_id());
 		do_action('glamlux_offer_published', $post_id, get_post_meta($post_id,'_gl_franchise_id',true));
 	}
 	public function on_delete_post( $post_id ) {
 		if ( in_array( get_post_type($post_id), ['gl_announcement','gl_offer','gl_gallery'], true ) ) {
-			delete_transient('gl_announcements_cache');
-			delete_transient('gl_offers_cache');
-			delete_transient('gl_gallery_cache');
+			$blog_id = '_blog_' . get_current_blog_id();
+			delete_transient('gl_announcements_cache' . $blog_id);
+			delete_transient('gl_offers_cache' . $blog_id);
+			delete_transient('gl_gallery_cache' . $blog_id);
 		}
 	}
 	public function invalidate_content_cache( $post_id ) {
 		$type = get_post_type($post_id);
-		if ( 'gl_announcement' === $type ) delete_transient('gl_announcements_cache');
-		if ( 'gl_offer'        === $type ) delete_transient('gl_offers_cache');
-		if ( 'gl_gallery'      === $type ) delete_transient('gl_gallery_cache');
+		$blog_id = '_blog_' . get_current_blog_id();
+		if ( 'gl_announcement' === $type ) delete_transient('gl_announcements_cache' . $blog_id);
+		if ( 'gl_offer'        === $type ) delete_transient('gl_offers_cache' . $blog_id);
+		if ( 'gl_gallery'      === $type ) delete_transient('gl_gallery_cache' . $blog_id);
 	}
 
 	/* -----------------------------------------------------------------------

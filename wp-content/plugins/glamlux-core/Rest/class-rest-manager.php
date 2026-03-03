@@ -4,12 +4,21 @@ class GlamLux_REST_Manager
 	public function __construct()
 	{
 		add_filter('rest_pre_dispatch', [$this, 'check_rate_limit'], 10, 3);
+		add_filter('rest_post_dispatch', [$this, 'add_cors_headers'], 10, 3);
 		add_filter('rest_post_dispatch', [$this, 'format_response_envelope'], 10, 3);
 		add_filter('rest_post_dispatch', [$this, 'add_caching_headers'], 10, 3);
 		add_action('rest_api_init', [$this, 'init_controllers']);
 	}
 	public function init_controllers()
 	{
+		// Auth interception & Controller
+		GlamLux_JWT_Auth::init();
+		require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-auth-controller.php';
+		require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-config-controller.php';
+
+		(new GlamLux_Auth_Controller())->register_routes();
+		(new GlamLux_Config_Controller())->register_routes();
+
 		// Core Booking Domain
 		(new GlamLux_Salon_Controller())->register_routes();
 		(new GlamLux_Service_Controller())->register_routes();
@@ -74,7 +83,7 @@ class GlamLux_REST_Manager
 		if (in_array($ip, ['127.0.0.1', '::1', '::ffff:127.0.0.1'], true))
 			return $result;
 
-		$transient_key = 'glamlux_rl_' . md5($ip);
+		$transient_key = 'glamlux_rl_' . md5($ip . '_blog_' . get_current_blog_id());
 		$window = 60; // seconds
 		$max_requests = 60;
 
@@ -99,6 +108,32 @@ class GlamLux_REST_Manager
 				$response->header('Cache-Control', 'public, max-age=900');
 			}
 		}
+		return $response;
+	}
+
+	public function add_cors_headers($response, $server, $request)
+	{
+		$route = $request->get_route();
+		if (strpos($route, '/glamlux/v1') !== 0)
+			return $response;
+
+		if (!($response instanceof WP_REST_Response)) {
+			return $response;
+		}
+
+		$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+		$allowed_origins = apply_filters('glamlux_cors_allowed_origins', [
+			get_site_url(),
+		]);
+
+		if ($origin && in_array($origin, $allowed_origins, true)) {
+			$response->header('Access-Control-Allow-Origin', $origin);
+			$response->header('Access-Control-Allow-Credentials', 'true');
+			$response->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+			$response->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+			$response->header('Access-Control-Max-Age', '86400');
+		}
+
 		return $response;
 	}
 

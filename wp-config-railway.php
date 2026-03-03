@@ -61,6 +61,12 @@ else {
 // Disable WP-Cron — Railway scheduled job handles this
 define('DISABLE_WP_CRON', true);
 
+// JWT Secret for headless authentication — must be set in Railway environment variables
+if (!getenv('GLAMLUX_JWT_SECRET')) {
+    error_log('[GlamLux] GLAMLUX_JWT_SECRET env var is not set. JWT will fall back to wp_salt() (lower security).');
+}
+define('GLAMLUX_JWT_SECRET', getenv('GLAMLUX_JWT_SECRET') ?: wp_salt('auth'));
+
 if (!defined('ABSPATH'))
     define('ABSPATH', __DIR__ . '/');
 require_once ABSPATH . 'wp-settings.php';

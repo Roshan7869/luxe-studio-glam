@@ -5,9 +5,23 @@
   <meta charset="<?php bloginfo('charset'); ?>" />
   <meta content="width=device-width, initial-scale=1.0" name="viewport" />
   <title><?php wp_title('|', true, 'right');
-  bloginfo('name'); ?></title>
+bloginfo('name'); ?></title>
   <meta name="description"
     content="GlamLux2Lux — India's premier luxury beauty franchise. Book appointments, explore services, and own a franchise location today.">
+    
+  <!-- PWA & Mobile Enhancements (Sprint D2) -->
+  <link rel="manifest" href="<?php echo esc_url(get_template_directory_uri()); ?>/manifest.json">
+  <meta name="theme-color" content="#C6A75E">
+  <link rel="apple-touch-icon" href="<?php echo esc_url(get_template_directory_uri()); ?>/assets/icon-192.png">
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .catch(err => console.log('SW registration failed: ', err));
+      });
+    }
+  </script>
+
   <?php wp_head(); ?>
 
   <!-- Google Fonts -->

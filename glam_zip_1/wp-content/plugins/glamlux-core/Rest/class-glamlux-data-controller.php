@@ -74,7 +74,8 @@ class GlamLux_Data_Controller extends GlamLux_Base_Controller
     public function get_memberships(WP_REST_Request $request): WP_REST_Response
     {
         global $wpdb;
-        $cached = get_transient('gl_api_memberships');
+        $cache_key = 'gl_api_memberships_blog_' . get_current_blog_id();
+        $cached = get_transient($cache_key);
         if (false !== $cached)
             return rest_ensure_response($cached);
 
@@ -86,7 +87,7 @@ class GlamLux_Data_Controller extends GlamLux_Base_Controller
             ARRAY_A
         ) ?: [];
 
-        set_transient('gl_api_memberships', $rows, 15 * MINUTE_IN_SECONDS);
+        set_transient($cache_key, $rows, 15 * MINUTE_IN_SECONDS);
         return rest_ensure_response($rows);
     }
 
@@ -95,7 +96,8 @@ class GlamLux_Data_Controller extends GlamLux_Base_Controller
         global $wpdb;
         $limit = min(abs((int)($request->get_param('limit') ?: 20)), 100);
         $salon = (int)($request->get_param('salon_id') ?: 0);
-        $cached = get_transient('gl_api_service_logs_' . $salon . '_' . $limit);
+        $cache_key = 'gl_api_service_logs_' . $salon . '_' . $limit . '_blog_' . get_current_blog_id();
+        $cached = get_transient($cache_key);
         if (false !== $cached)
             return rest_ensure_response($cached);
 
@@ -117,14 +119,15 @@ class GlamLux_Data_Controller extends GlamLux_Base_Controller
             $limit
         ), ARRAY_A) ?: [];
 
-        set_transient('gl_api_service_logs_' . $salon . '_' . $limit, $rows, 15 * MINUTE_IN_SECONDS);
+        set_transient($cache_key, $rows, 15 * MINUTE_IN_SECONDS);
         return rest_ensure_response($rows);
     }
 
     public function get_franchises(WP_REST_Request $request): WP_REST_Response
     {
         global $wpdb;
-        $cached = get_transient('gl_api_franchises');
+        $cache_key = 'gl_api_franchises_blog_' . get_current_blog_id();
+        $cached = get_transient($cache_key);
         if (false !== $cached)
             return rest_ensure_response($cached);
 
@@ -135,7 +138,7 @@ class GlamLux_Data_Controller extends GlamLux_Base_Controller
             ARRAY_A
         ) ?: [];
 
-        set_transient('gl_api_franchises', $rows, 15 * MINUTE_IN_SECONDS);
+        set_transient($cache_key, $rows, 15 * MINUTE_IN_SECONDS);
         return rest_ensure_response($rows);
     }
 
@@ -143,7 +146,8 @@ class GlamLux_Data_Controller extends GlamLux_Base_Controller
     {
         global $wpdb;
         $salon = (int)($request->get_param('salon_id') ?: 0);
-        $cached = get_transient('gl_api_staff_profiles_' . $salon);
+        $cache_key = 'gl_api_staff_profiles_' . $salon . '_blog_' . get_current_blog_id();
+        $cached = get_transient($cache_key);
         if (false !== $cached)
             return rest_ensure_response($cached);
 
@@ -162,7 +166,7 @@ class GlamLux_Data_Controller extends GlamLux_Base_Controller
             ARRAY_A
         ) ?: [];
 
-        set_transient('gl_api_staff_profiles_' . $salon, $rows, 15 * MINUTE_IN_SECONDS);
+        set_transient($cache_key, $rows, 15 * MINUTE_IN_SECONDS);
         return rest_ensure_response($rows);
     }
 

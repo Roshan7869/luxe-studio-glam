@@ -1,14 +1,16 @@
 <?php
 /**
- * Event Listeners — Sprint 5
+ * Event Listeners — Sprint A (Async Refactor)
  *
- * Real side effects: email + SMS notifications for domain events.
- * Rules: Idempotent, fail silently, log errors, no new domain events dispatched.
+ * All notifications now route through GlamLux_Async_Dispatcher for background
+ * processing. The main HTTP request returns instantly; cron dispatches later.
+ *
+ * Rules: Idempotent, fail silently, log errors, no blocking I/O.
  */
 class GlamLux_Event_Listeners
 {
     /**
-     * Appointment created → send confirmation email + SMS to client.
+     * Appointment created → queue confirmation email + SMS.
      */
     public static function on_appointment_created($payload)
     {
@@ -37,7 +39,7 @@ class GlamLux_Event_Listeners
 
             $date_formatted = date('l, M j Y \a\t g:i A', strtotime($apt->appointment_date));
 
-            // Email notification
+            // Queue email (non-blocking)
             $subject = 'Your GlamLux Appointment is Confirmed';
             $body = sprintf(
                 '<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
@@ -53,14 +55,12 @@ class GlamLux_Event_Listeners
                 esc_html($date_formatted),
                 $appointment_id
             );
-            wp_mail($user->user_email, $subject, $body, ['Content-Type: text/html; charset=UTF-8']);
+            GlamLux_Async_Dispatcher::enqueue_email($user->user_email, $subject, $body);
 
-            // SMS notification
+            // Queue SMS (non-blocking)
             $phone = get_user_meta($apt->wp_user_id, 'billing_phone', true);
             if ($phone) {
-                require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-exotel-api.php';
-                $sms = new GlamLux_Exotel_API();
-                $sms->send_sms($phone, sprintf(
+                GlamLux_Async_Dispatcher::enqueue_sms($phone, sprintf(
                     'GlamLux: Your appointment #%d at %s on %s is confirmed!',
                     $appointment_id, $apt->salon_name ?? 'GlamLux', date('M j, g:i A', strtotime($apt->appointment_date))
                 ));
@@ -72,7 +72,7 @@ class GlamLux_Event_Listeners
     }
 
     /**
-     * Membership granted → send welcome email + SMS.
+     * Membership granted → queue welcome email + SMS.
      */
     public static function on_membership_granted($payload)
     {
@@ -109,14 +109,12 @@ class GlamLux_Event_Listeners
                 esc_html($client->tier_name ?? 'Premium'),
                 esc_html(date('M j, Y', strtotime($client->membership_expiry)))
             );
-            wp_mail($client->user_email, $subject, $body, ['Content-Type: text/html; charset=UTF-8']);
+            GlamLux_Async_Dispatcher::enqueue_email($client->user_email, $subject, $body);
 
-            // SMS
+            // Queue SMS
             $phone = get_user_meta($client->wp_user_id, 'billing_phone', true);
             if ($phone) {
-                require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-exotel-api.php';
-                $sms = new GlamLux_Exotel_API();
-                $sms->send_sms($phone, sprintf(
+                GlamLux_Async_Dispatcher::enqueue_sms($phone, sprintf(
                     'Welcome to GlamLux %s membership! Valid until %s. Enjoy exclusive benefits!',
                     $client->tier_name ?? 'Premium', date('M j, Y', strtotime($client->membership_expiry))
                 ));
@@ -128,18 +126,19 @@ class GlamLux_Event_Listeners
     }
 
     /**
-     * Payment captured → confirm booking + send receipt email.
+     * Payment captured → confirm booking + queue receipt email.
      */
     public static function on_payment_captured($payload)
     {
         try {
             glamlux_log_error('Event: payment_captured processing', $payload);
 
+            // Payment confirmation is business-critical — keep synchronous
             if (!empty($payload['appointment_id'])) {
                 $service = new GlamLux_Service_Booking();
                 $service->confirm_payment($payload['appointment_id']);
 
-                // Send payment receipt
+                // Queue payment receipt email (non-blocking)
                 global $wpdb;
                 $apt = $wpdb->get_row($wpdb->prepare(
                     "SELECT a.*, c.wp_user_id, s.name AS salon_name
@@ -164,7 +163,7 @@ class GlamLux_Event_Listeners
                             esc_html($user->display_name), $amount, $payload['appointment_id'],
                             esc_html($apt->salon_name ?? 'GlamLux')
                         );
-                        wp_mail($user->user_email, 'GlamLux Payment Received', $body, ['Content-Type: text/html; charset=UTF-8']);
+                        GlamLux_Async_Dispatcher::enqueue_email($user->user_email, 'GlamLux Payment Received', $body);
                     }
                 }
             }
@@ -175,7 +174,7 @@ class GlamLux_Event_Listeners
     }
 
     /**
-     * Low inventory → alert salon admin via email.
+     * Low inventory → queue alert email to admin.
      */
     public static function on_low_inventory($payload)
     {
@@ -199,7 +198,11 @@ class GlamLux_Event_Listeners
                 esc_html($item_name), esc_html($salon_name), (int)$qty, (int)$threshold,
                 admin_url('admin.php?page=glamlux-inventory')
             );
-            wp_mail($admin_email, "[GlamLux] Low Stock: {$item_name} at {$salon_name}", $body, ['Content-Type: text/html; charset=UTF-8']);
+            GlamLux_Async_Dispatcher::enqueue_email(
+                $admin_email,
+                "[GlamLux] Low Stock: {$item_name} at {$salon_name}",
+                $body
+            );
         }
         catch (\Throwable $e) {
             glamlux_log_error('Error in on_low_inventory', ['err' => $e->getMessage()]);
