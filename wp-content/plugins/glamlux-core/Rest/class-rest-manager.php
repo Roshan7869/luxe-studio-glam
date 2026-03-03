@@ -12,6 +12,7 @@ class GlamLux_REST_Manager
 	public function init_controllers()
 	{
 		// Auth interception & Controller
+		require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-jwt-auth.php';
 		GlamLux_JWT_Auth::init();
 		require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-auth-controller.php';
 		require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-config-controller.php';
