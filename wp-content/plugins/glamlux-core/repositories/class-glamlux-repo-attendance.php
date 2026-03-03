@@ -13,11 +13,40 @@ class GlamLux_Repo_Attendance
 		));
 	}
 
+	/**
+	 * Phase 1.3: Get all attendance records for a salon on a given date.
+	 * Joins with gl_staff and wp_users for display names.
+	 *
+	 * @param int    $salon_id
+	 * @param string $date  YYYY-MM-DD
+	 * @return array
+	 */
+	public function get_attendance_by_salon($salon_id, $date)
+	{
+		global $wpdb;
+		return $wpdb->get_results($wpdb->prepare(
+			"SELECT a.id, a.staff_id, a.shift_date, a.check_in, a.check_out,
+			        a.hours_worked, a.is_late, a.late_minutes, a.status,
+			        u.display_name AS staff_name, st.job_role
+			 FROM {$wpdb->prefix}gl_attendance a
+			 INNER JOIN {$wpdb->prefix}gl_staff st ON a.staff_id = st.id
+			 LEFT JOIN {$wpdb->users} u ON st.wp_user_id = u.ID
+			 WHERE a.salon_id = %d AND a.shift_date = %s
+			 ORDER BY a.check_in ASC",
+			absint($salon_id), $date
+		), ARRAY_A) ?: [];
+	}
+
+	/**
+	 * Get the shift schedule for a staff member on a given date.
+	 * Note: Uses shift_start/shift_end columns matching the canonical DB schema
+	 * defined in class-activator.php (table 19: gl_shifts).
+	 */
 	public function get_shift($staff_id, $date)
 	{
 		global $wpdb;
 		return $wpdb->get_row($wpdb->prepare(
-			"SELECT id, staff_id, shift_date, start_time, end_time, status
+			"SELECT id, staff_id, shift_date, shift_start AS start_time, shift_end AS end_time, status
 			 FROM {$wpdb->prefix}gl_shifts
 			 WHERE staff_id = %d AND shift_date = %s",
 			$staff_id, $date

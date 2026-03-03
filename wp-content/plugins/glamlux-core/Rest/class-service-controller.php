@@ -18,13 +18,9 @@ class GlamLux_Service_Controller extends GlamLux_Base_Controller
 		$repo = new GlamLux_Repo_Franchise();
 		$services = $repo->get_active_services();
 
-		if (empty($services)) {
-			$services = [
-				['id' => 's1', 'name' => 'Luminous Facial', 'price' => 180, 'category' => 'Skin'],
-				['id' => 's2', 'name' => 'Bridal Artistry', 'price' => 250, 'category' => 'Makeup']
-			];
+		if (!empty($services)) {
+			set_transient('glamlux_cached_services', $services, 300);
 		}
-		set_transient('glamlux_cached_services', $services, 300);
 		return rest_ensure_response($services);
 	}
 }

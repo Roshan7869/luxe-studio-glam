@@ -46,6 +46,9 @@ class GlamLux_Admin
 		add_submenu_page('glamlux-dashboard', 'Memberships', 'Memberships', 'manage_glamlux_platform', 'glamlux-memberships', array($this, 'display_memberships'));
 		add_submenu_page('glamlux-dashboard', 'Inventory', 'Inventory', 'manage_glamlux_platform', 'glamlux-inventory', array($this, 'display_inventory'));
 		add_submenu_page('glamlux-dashboard', 'Payroll (Global)', 'Payroll', 'manage_glamlux_platform', 'glamlux-payroll', array($this, 'display_payroll'));
+		add_submenu_page('glamlux-dashboard', 'Attendance', '⏰ Attendance', 'manage_glamlux_platform', 'glamlux-attendance', array($this, 'display_attendance'));
+		add_submenu_page('glamlux-dashboard', 'Shift Schedule', '📅 Shifts', 'manage_glamlux_platform', 'glamlux-shifts', array($this, 'display_shifts'));
+		add_submenu_page('glamlux-dashboard', 'Territory Management', '🗺️ Territories', 'manage_glamlux_platform', 'glamlux-territories', array($this, 'display_territories'));
 
 		// ─── Franchise Admin Top Menu ───────────────────────────────────────────
 		add_menu_page(
@@ -63,6 +66,8 @@ class GlamLux_Admin
 		add_submenu_page('glamlux-salon', 'Memberships', 'Memberships', 'manage_glamlux_franchise', 'glamlux-my-memberships', array($this, 'display_memberships'));
 		add_submenu_page('glamlux-salon', 'Inventory', 'Inventory', 'manage_glamlux_franchise', 'glamlux-my-inventory', array($this, 'display_inventory'));
 		add_submenu_page('glamlux-salon', 'Appointments', 'Appointments', 'manage_glamlux_franchise', 'glamlux-my-appointments', array($this, 'display_appointments'));
+		add_submenu_page('glamlux-salon', 'Attendance', '⏰ Attendance', 'manage_glamlux_franchise', 'glamlux-my-attendance', array($this, 'display_attendance'));
+		add_submenu_page('glamlux-salon', 'Shift Schedule', '📅 Shifts', 'manage_glamlux_franchise', 'glamlux-my-shifts', array($this, 'display_shifts'));
 
 		// ─── Staff Menu ─────────────────────────────────────────────────────────
 		add_menu_page(
@@ -248,6 +253,24 @@ class GlamLux_Admin
 	{
 		$appts = new GlamLux_Appointments();
 		$appts->render_admin_dashboard();
+	}
+
+	public function display_attendance()
+	{
+		$att = new GlamLux_Attendance_Admin();
+		$att->render_admin_page();
+	}
+
+	public function display_shifts()
+	{
+		$shifts = new GlamLux_Shifts_Admin();
+		$shifts->render_admin_page();
+	}
+
+	public function display_territories()
+	{
+		$territory = new GlamLux_Territory_Admin();
+		$territory->render_admin_page();
 	}
 
 	/**

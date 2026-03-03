@@ -214,6 +214,10 @@ function run_glamlux_core()
 	require_once GLAMLUX_PLUGIN_DIR . 'admin/modules/class-glamlux-staff.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'admin/modules/class-glamlux-memberships.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'admin/modules/class-glamlux-inventory-admin.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'admin/modules/class-glamlux-attendance-admin.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'admin/modules/class-glamlux-shifts-admin.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'admin/modules/class-glamlux-platform-settings.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'admin/modules/class-glamlux-territory-admin.php';
 
 	// ── STEP 8: Instantiate Services (global DI references) ──────────────────
 
@@ -252,6 +256,13 @@ function run_glamlux_core()
 	new GlamLux_Appointments();
 	new GlamLux_Franchises();
 	new GlamLux_Services_Admin();
+	new GlamLux_Staff(); // Sprint 2: register admin_post handlers at boot
+	new GlamLux_Attendance_Admin(); // Sprint 2: register check-in/check-out handlers
+	new GlamLux_Shifts_Admin(); // Sprint 2: register shift create/delete handlers
+	new GlamLux_Inventory_Admin(); // Sprint 4: register inventory CRUD handlers
+	new GlamLux_Memberships(); // Sprint 3: register membership CRUD handlers
+	new GlamLux_Platform_Settings(); // Sprint 5: platform settings page
+	new GlamLux_Territory_Admin(); // Sprint 6: territory management
 }
 add_action('plugins_loaded', 'run_glamlux_core', 20);
 
@@ -262,10 +273,9 @@ add_action('init', function () {
 	if (!isset($_GET['seed_now']) || $_GET['seed_now'] !== '1') {
 		return;
 	}
-	// Security: temporarily bypassed to seed production Railway database
-	// if (!is_user_logged_in() || !current_user_can('manage_options')) {
-	// 	wp_die('Unauthorized. You must be logged in as an administrator to seed data.', 'GlamLux Seed', ['response' => 403]);
-	// }
+	if (!is_user_logged_in() || !current_user_can('manage_options')) {
+		wp_die('Unauthorized. You must be logged in as an administrator to seed data.', 'GlamLux Seed', ['response' => 403]);
+	}
 	// Idempotency: only seed once. Delete option to re-seed.
 	if (get_option('glamlux_enterprise_seed_v1')) {
 		wp_die('✅ Enterprise dataset was already seeded on ' . get_option('glamlux_enterprise_seed_v1') . '. To re-seed, delete the <code>glamlux_enterprise_seed_v1</code> option.');

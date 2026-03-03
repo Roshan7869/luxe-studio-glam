@@ -60,4 +60,93 @@ class GlamLux_Service_Attendance
 
 		return [(int)$matches[1], (int)$matches[2]];
 	}
+
+	// ─────────────────────────────────────────────────────────────────────────
+	// Phase 4: Shift CRUD
+	// ─────────────────────────────────────────────────────────────────────────
+
+	public function create_shift($data)
+	{
+		global $wpdb;
+		$required = ['staff_id', 'salon_id', 'shift_date', 'shift_start', 'shift_end'];
+		foreach ($required as $k) {
+			if (empty($data[$k])) {
+				return new \WP_Error('missing_field', "Missing required field: {$k}");
+			}
+		}
+
+		// Check for existing shift on this date for this staff
+		$existing = $this->repo->get_shift((int)$data['staff_id'], sanitize_text_field($data['shift_date']));
+		if ($existing) {
+			return new \WP_Error('duplicate_shift', 'A shift already exists for this staff member on this date.');
+		}
+
+		$result = $wpdb->insert(
+			$wpdb->prefix . 'gl_shifts',
+		[
+			'staff_id' => absint($data['staff_id']),
+			'salon_id' => absint($data['salon_id']),
+			'shift_date' => sanitize_text_field($data['shift_date']),
+			'shift_start' => sanitize_text_field($data['shift_start']),
+			'shift_end' => sanitize_text_field($data['shift_end']),
+			'type' => sanitize_text_field($data['type'] ?? 'scheduled'),
+		],
+		['%d', '%d', '%s', '%s', '%s', '%s']
+		);
+		return $result ? $wpdb->insert_id : new \WP_Error('db_error', 'Failed to create shift.');
+	}
+
+	public function update_shift($shift_id, $data)
+	{
+		global $wpdb;
+		$update = [];
+		$formats = [];
+		if (isset($data['shift_start'])) {
+			$update['shift_start'] = sanitize_text_field($data['shift_start']);
+			$formats[] = '%s';
+		}
+		if (isset($data['shift_end'])) {
+			$update['shift_end'] = sanitize_text_field($data['shift_end']);
+			$formats[] = '%s';
+		}
+		if (isset($data['type'])) {
+			$update['type'] = sanitize_text_field($data['type']);
+			$formats[] = '%s';
+		}
+		if (empty($update))
+			return false;
+
+		return $wpdb->update(
+			$wpdb->prefix . 'gl_shifts',
+			$update,
+		['id' => absint($shift_id)],
+			$formats,
+		['%d']
+		);
+	}
+
+	public function delete_shift($shift_id)
+	{
+		global $wpdb;
+		return $wpdb->delete(
+			$wpdb->prefix . 'gl_shifts',
+		['id' => absint($shift_id)],
+		['%d']
+		);
+	}
+
+	public function get_shifts_for_salon($salon_id, $week_start, $week_end)
+	{
+		global $wpdb;
+		return $wpdb->get_results($wpdb->prepare(
+			"SELECT s.id, s.staff_id, s.shift_date, s.shift_start, s.shift_end, s.type,
+			        u.display_name AS staff_name, st.job_role
+			 FROM {$wpdb->prefix}gl_shifts s
+			 INNER JOIN {$wpdb->prefix}gl_staff st ON s.staff_id = st.id
+			 LEFT JOIN {$wpdb->users} u ON st.wp_user_id = u.ID
+			 WHERE s.salon_id = %d AND s.shift_date BETWEEN %s AND %s
+			 ORDER BY s.shift_date ASC, s.shift_start ASC",
+			absint($salon_id), $week_start, $week_end
+		), ARRAY_A) ?: [];
+	}
 }

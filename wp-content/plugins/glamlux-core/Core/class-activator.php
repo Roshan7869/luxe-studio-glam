@@ -339,6 +339,7 @@ class GlamLux_Activator
 			$staff->add_cap('upload_files'); // allow uploading before/after images
 			$staff->add_cap('edit_posts'); // allow basic post drafts
 			$staff->add_cap('manage_glamlux_appointments');
+			$staff->add_cap('glamlux_check_attendance'); // Phase 1.1: allow clock-in/out
 		}
 	}
 

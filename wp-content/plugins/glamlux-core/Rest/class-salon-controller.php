@@ -18,13 +18,9 @@ class GlamLux_Salon_Controller extends GlamLux_Base_Controller
 		$repo = new GlamLux_Repo_Franchise();
 		$salons = $repo->get_active_salons();
 
-		if (empty($salons)) {
-			$salons = [
-				['id' => 1, 'name' => 'GlamLux Downtown', 'address' => '123 Luxury Ave', 'phone' => '+91 9000000001'],
-				['id' => 2, 'name' => 'GlamLux Beverly Hills', 'address' => '90210 High St', 'phone' => '+91 9000000002']
-			];
+		if (!empty($salons)) {
+			set_transient('glamlux_cached_salons', $salons, 300);
 		}
-		set_transient('glamlux_cached_salons', $salons, 300);
 		return rest_ensure_response($salons);
 	}
 }
