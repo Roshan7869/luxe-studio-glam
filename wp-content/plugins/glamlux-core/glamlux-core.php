@@ -249,6 +249,8 @@ function run_glamlux_core()
 	$glamlux_mailer = new GlamLux_Service_Mailer();
 
 	// Admin + Infrastructure
+	require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-shortcodes.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-rate-limiter.php';
 	new GlamLux_Content_Manager(); // CPTs, Permissions, Customizer, REST content routes
 	new GlamLux_Admin();
 	new GlamLux_Settings();
