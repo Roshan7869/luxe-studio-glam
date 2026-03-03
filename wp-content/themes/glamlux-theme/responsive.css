@@ -1,0 +1,471 @@
+/* ═════════════════════════════════════════════════════════════════
+   RESPONSIVE ADAPTIVE DESIGN SYSTEM - Mobile-First Architecture
+   Luxe Studio Glam v3.1
+   ═════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────────
+   BREAKPOINT SYSTEM (Mobile-First)
+   ───────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Breakpoints (mobile-first) */
+  --bp-mobile: 0;
+  --bp-small: 576px;   /* Small tablets */
+  --bp-tablet: 768px;  /* Tablets */
+  --bp-desktop: 992px; /* Desktops */
+  --bp-wide: 1200px;   /* Large desktops */
+
+  /* Responsive Spacing */
+  --spacing-mobile: 16px;
+  --spacing-tablet: 24px;
+  --spacing-desktop: 32px;
+
+  /* Responsive Font Sizes (using clamp) */
+  --text-sm: clamp(0.75rem, 2vw, 0.875rem);
+  --text-base: clamp(0.875rem, 2.5vw, 1rem);
+  --text-lg: clamp(1rem, 3vw, 1.125rem);
+  --text-xl: clamp(1.25rem, 4vw, 1.5rem);
+  --text-2xl: clamp(1.5rem, 5vw, 1.875rem);
+  --text-3xl: clamp(1.875rem, 6vw, 2.25rem);
+  --text-4xl: clamp(2.25rem, 7vw, 3rem);
+  --text-5xl: clamp(3rem, 8vw, 3.75rem);
+
+  /* Touch targets (mobile) */
+  --touch-target: 48px;
+  --touch-padding: 12px;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   RESPONSIVE CONTAINER (Mobile-First)
+   ───────────────────────────────────────────────────────────────── */
+
+.container,
+.gl-container {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 var(--spacing-mobile);
+}
+
+@media (min-width: 576px) {
+  .container,
+  .gl-container {
+    padding: 0 var(--spacing-tablet);
+    max-width: 540px;
+  }
+}
+
+@media (min-width: 768px) {
+  .container,
+  .gl-container {
+    max-width: 720px;
+  }
+}
+
+@media (min-width: 992px) {
+  .container,
+  .gl-container {
+    max-width: 960px;
+    padding: 0 var(--spacing-desktop);
+  }
+}
+
+@media (min-width: 1200px) {
+  .container,
+  .gl-container {
+    max-width: 1140px;
+  }
+}
+
+@media (min-width: 1400px) {
+  .container,
+  .gl-container {
+    max-width: 1320px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   RESPONSIVE GRID (Mobile-First)
+   ───────────────────────────────────────────────────────────────── */
+
+.grid,
+.gl-grid {
+  display: grid;
+  gap: var(--spacing-mobile);
+  grid-template-columns: 1fr; /* Mobile: 1 column */
+}
+
+/* Small (2 columns) */
+@media (min-width: 576px) {
+  .grid-2,
+  .gl-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Medium (3 columns) */
+@media (min-width: 768px) {
+  .grid-3,
+  .gl-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .grid {
+    gap: var(--spacing-tablet);
+  }
+}
+
+/* Large (4 columns) */
+@media (min-width: 992px) {
+  .grid-4,
+  .gl-grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-desktop);
+  }
+
+  .grid {
+    gap: var(--spacing-desktop);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   RESPONSIVE TYPOGRAPHY (Mobile-First)
+   ───────────────────────────────────────────────────────────────── */
+
+h1 {
+  font-size: var(--text-4xl);
+}
+
+h2 {
+  font-size: var(--text-3xl);
+}
+
+h3 {
+  font-size: var(--text-2xl);
+}
+
+h4 {
+  font-size: var(--text-xl);
+}
+
+p {
+  font-size: var(--text-base);
+}
+
+small {
+  font-size: var(--text-sm);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   RESPONSIVE BUTTONS & INPUTS (Mobile-First)
+   ───────────────────────────────────────────────────────────────── */
+
+.btn,
+button,
+input[type="button"],
+input[type="submit"],
+a.btn {
+  min-height: var(--touch-target);
+  min-width: var(--touch-target);
+  padding: var(--touch-padding) 1rem;
+  font-size: var(--text-base);
+  border-radius: 9999px;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Prevent iOS zoom on inputs */
+input,
+select,
+textarea {
+  font-size: 16px !important; /* Prevents zoom on iOS */
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   RESPONSIVE SECTIONS (Mobile-First)
+   ───────────────────────────────────────────────────────────────── */
+
+.section,
+.gl-section {
+  padding: 48px 0;
+}
+
+@media (min-width: 768px) {
+  .section,
+  .gl-section {
+    padding: 72px 0;
+  }
+}
+
+@media (min-width: 992px) {
+  .section,
+  .gl-section {
+    padding: 96px 0;
+  }
+}
+
+.section-sm,
+.gl-section-sm {
+  padding: 32px 0;
+}
+
+@media (min-width: 768px) {
+  .section-sm,
+  .gl-section-sm {
+    padding: 48px 0;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   RESPONSIVE FLEXBOX (Mobile-First)
+   ───────────────────────────────────────────────────────────────── */
+
+.flex-col,
+.flex-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-mobile);
+}
+
+@media (min-width: 992px) {
+  .flex-row {
+    display: flex;
+    flex-direction: row;
+    gap: var(--spacing-desktop);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   VISIBILITY UTILITIES (Responsive)
+   ───────────────────────────────────────────────────────────────── */
+
+/* Show only on mobile */
+.show-mobile {
+  display: block;
+}
+
+.hide-mobile {
+  display: none;
+}
+
+/* Hide on tablet and up */
+@media (min-width: 768px) {
+  .show-mobile {
+    display: none;
+  }
+
+  .hide-mobile {
+    display: block;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   IMAGES & MEDIA (Responsive)
+   ───────────────────────────────────────────────────────────────── */
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.img-fluid {
+  max-width: 100%;
+  height: auto;
+}
+
+.aspect-ratio-1 {
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+}
+
+.aspect-ratio-16-9 {
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.aspect-ratio-4-3 {
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   TOUCH vs MOUSE INTERACTIONS (Device-Specific)
+   ───────────────────────────────────────────────────────────────── */
+
+/* Desktop: Hover states */
+@media (hover: hover) and (pointer: fine) {
+  button:hover,
+  a.btn:hover,
+  .card:hover {
+    transform: translateY(-4px);
+  }
+}
+
+/* Mobile: Touch states */
+@media (hover: none) and (pointer: coarse) {
+  button:active,
+  a.btn:active,
+  .card:active {
+    transform: scale(0.98);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   MOBILE NAVIGATION (Hamburger Menu)
+   ───────────────────────────────────────────────────────────────── */
+
+.mobile-menu-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 12px;
+  margin: 0;
+}
+
+.mobile-menu-toggle span {
+  width: 24px;
+  height: 2px;
+  background: var(--text-primary);
+  transition: all var(--transition-base);
+  display: block;
+}
+
+.mobile-menu-toggle.active span:nth-child(1) {
+  transform: rotate(45deg) translate(8px, 8px);
+}
+
+.mobile-menu-toggle.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.mobile-menu-toggle.active span:nth-child(3) {
+  transform: rotate(-45deg) translate(7px, -7px);
+}
+
+/* Show toggle on mobile */
+.mobile-menu-toggle {
+  display: block;
+}
+
+/* Hide on desktop */
+@media (min-width: 992px) {
+  .mobile-menu-toggle {
+    display: none;
+  }
+}
+
+/* Mobile menu offcanvas */
+.mobile-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background: var(--dark-2);
+  transform: translateX(-100%);
+  transition: transform var(--transition-base);
+  z-index: 999;
+  overflow-y: auto;
+  padding-top: 80px;
+}
+
+.mobile-menu.active {
+  transform: translateX(0);
+}
+
+.mobile-menu a {
+  display: block;
+  padding: 16px 24px;
+  color: var(--off-white);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mobile-menu a:hover {
+  background: rgba(198, 167, 94, 0.1);
+  color: var(--gold);
+}
+
+/* Hide on desktop */
+@media (min-width: 992px) {
+  .mobile-menu {
+    display: none;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   TABLES (Responsive)
+   ───────────────────────────────────────────────────────────────── */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* Responsive table on mobile: stack vertically */
+@media (max-width: 767px) {
+  table,
+  thead,
+  tbody,
+  th,
+  td,
+  tr {
+    display: block;
+    width: 100%;
+  }
+
+  thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+
+  tr {
+    margin-bottom: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  td {
+    padding: 12px 24px;
+    text-align: right;
+    padding-left: 50%;
+    position: relative;
+  }
+
+  td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 12px;
+    font-weight: 600;
+    text-align: left;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   PRINT STYLES
+   ───────────────────────────────────────────────────────────────── */
+
+@media print {
+  .no-print,
+  .navbar,
+  .header,
+  .footer {
+    display: none;
+  }
+
+  body {
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   END RESPONSIVE ADAPTIVE DESIGN SYSTEM
+   ═════════════════════════════════════════════════════════════════ */

@@ -3,16 +3,26 @@
 
 <head>
   <meta charset="<?php bloginfo('charset'); ?>" />
-  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title><?php wp_title('|', true, 'right');
 bloginfo('name'); ?></title>
   <meta name="description"
     content="GlamLux2Lux — India's premier luxury beauty franchise. Book appointments, explore services, and own a franchise location today.">
     
-  <!-- PWA & Mobile Enhancements (Sprint D2) -->
-  <link rel="manifest" href="<?php echo esc_url(get_template_directory_uri()); ?>/manifest.json">
+  <!-- Mobile Optimization -->
   <meta name="theme-color" content="#C6A75E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GlamLux">
+  <meta name="application-name" content="GlamLux">
+  <meta name="msapplication-TileColor" content="#C6A75E">
+  
+  <!-- PWA & Mobile Enhancements -->
+  <link rel="manifest" href="<?php echo esc_url(get_template_directory_uri()); ?>/manifest.json">
   <link rel="apple-touch-icon" href="<?php echo esc_url(get_template_directory_uri()); ?>/assets/icon-192.png">
+  
+  <!-- Responsive CSS Framework -->
+  <link rel="stylesheet" href="<?php echo esc_url(get_template_directory_uri()); ?>/responsive.css">
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

@@ -37,7 +37,8 @@ $fallback_services = [
 $services = !empty($services_raw) ? array_slice($services_raw, 0, 6) : $fallback_services;
 
 // ─── Fetch Salons
-$salons_raw = get_transient('glamlux_fp_salons_db');
+$cache_key_salons = 'glamlux_fp_salons_db_blog_' . get_current_blog_id();
+$salons_raw = get_transient($cache_key_salons);
 if (false === $salons_raw) {
   global $wpdb;
   $t = $wpdb->prefix . 'gl_salons';
@@ -48,12 +49,13 @@ if (false === $salons_raw) {
     );
   }
   $salons_raw = is_array($salons_raw) ? $salons_raw : [];
-  set_transient('glamlux_fp_salons_db', $salons_raw, 15 * MINUTE_IN_SECONDS);
+  set_transient($cache_key_salons, $salons_raw, 15 * MINUTE_IN_SECONDS);
 }
 $salons = !empty($salons_raw) ? $salons_raw : [];
 
 // ─── Fetch Staff
-$staff_raw = get_transient('glamlux_fp_staff_db');
+$cache_key_staff = 'glamlux_fp_staff_db_blog_' . get_current_blog_id();
+$staff_raw = get_transient($cache_key_staff);
 if (false === $staff_raw) {
   global $wpdb;
   $ts = $wpdb->prefix . 'gl_staff';
@@ -65,12 +67,13 @@ if (false === $staff_raw) {
     );
   }
   $staff_raw = is_array($staff_raw) ? $staff_raw : [];
-  set_transient('glamlux_fp_staff_db', $staff_raw, 15 * MINUTE_IN_SECONDS);
+  set_transient($cache_key_staff, $staff_raw, 15 * MINUTE_IN_SECONDS);
 }
 $staff = !empty($staff_raw) ? $staff_raw : [];
 
 // ─── Fetch Memberships
-$memberships_raw = get_transient('glamlux_fp_memberships_db');
+$cache_key_memberships = 'glamlux_fp_memberships_db_blog_' . get_current_blog_id();
+$memberships_raw = get_transient($cache_key_memberships);
 if (false === $memberships_raw) {
   global $wpdb;
   $t = $wpdb->prefix . 'gl_memberships';
@@ -81,12 +84,13 @@ if (false === $memberships_raw) {
     );
   }
   $memberships_raw = is_array($memberships_raw) ? $memberships_raw : [];
-  set_transient('glamlux_fp_memberships_db', $memberships_raw, 15 * MINUTE_IN_SECONDS);
+  set_transient($cache_key_memberships, $memberships_raw, 15 * MINUTE_IN_SECONDS);
 }
 $memberships = !empty($memberships_raw) ? $memberships_raw : [];
 
 // ─── Fetch Franchises
-$franchises_raw = get_transient('glamlux_fp_franchises_db');
+$cache_key_franchises = 'glamlux_fp_franchises_db_blog_' . get_current_blog_id();
+$franchises_raw = get_transient($cache_key_franchises);
 if (false === $franchises_raw) {
   global $wpdb;
   $t = $wpdb->prefix . 'gl_franchises';
@@ -97,7 +101,7 @@ if (false === $franchises_raw) {
     );
   }
   $franchises_raw = is_array($franchises_raw) ? $franchises_raw : [];
-  set_transient('glamlux_fp_franchises_db', $franchises_raw, 15 * MINUTE_IN_SECONDS);
+  set_transient($cache_key_franchises, $franchises_raw, 15 * MINUTE_IN_SECONDS);
 }
 $franchises = !empty($franchises_raw) ? $franchises_raw : [];
 
