@@ -18,6 +18,11 @@ class GlamLux_Repo_Staff
         $where = ['1=1'];
         $params = [];
 
+        // PHASE 3: Support franchise_id filtering for tenant isolation
+        if (!empty($filters['franchise_id'])) {
+            $where[] = 'sl.franchise_id = %d';
+            $params[] = (int)$filters['franchise_id'];
+        }
         if (!empty($filters['salon_id'])) {
             $where[] = 'st.salon_id = %d';
             $params[] = (int)$filters['salon_id'];

@@ -38,17 +38,8 @@ class GlamLux_Services_Admin {
 	}
 
 	private function render_list_table() {
-		global $wpdb;
-
-		// Fetch services with optional franchise-specific override count
-		$services = $wpdb->get_results(
-			"SELECT sp.*, COUNT(spo.id) AS override_count
-			 FROM {$wpdb->prefix}gl_service_pricing sp
-			 LEFT JOIN {$wpdb->prefix}gl_service_pricing spo ON spo.service_id = sp.id AND spo.franchise_id IS NOT NULL
-			 WHERE sp.franchise_id IS NULL
-			 GROUP BY sp.id
-			 ORDER BY sp.service_name ASC"
-		);
+		$service = new GlamLux_Service_Service();
+		$services = $service->get_all();
 
 		$add_url = admin_url( 'admin.php?page=glamlux-services&gl_action=add' );
 
@@ -103,27 +94,15 @@ class GlamLux_Services_Admin {
 	}
 
 	private function render_edit_form( $service_id ) {
-		global $wpdb;
-
+		$service = new GlamLux_Service_Service();
+		
 		$svc = null;
 		if ( $service_id > 0 ) {
-			$svc = $wpdb->get_row(
-				$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}gl_service_pricing WHERE id = %d AND franchise_id IS NULL LIMIT 1", $service_id )
-			);
+			$svc = $service->get_by_id( $service_id );
 		}
 
-		// Get all franchises for the override section
-		$franchises = $wpdb->get_results( "SELECT id, name FROM {$wpdb->prefix}gl_franchises ORDER BY name ASC" );
-
-		// Get existing franchise overrides for this service
-		$overrides = $service_id > 0 ? $wpdb->get_results(
-			$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}gl_service_pricing WHERE service_id = %d AND franchise_id IS NOT NULL", $service_id )
-		) : array();
-
-		$overrides_by_franchise = array();
-		foreach ( $overrides as $o ) {
-			$overrides_by_franchise[ $o->franchise_id ] = $o->custom_price;
-		}
+		$franchises = $service->get_franchises();
+		$overrides_by_franchise = $service_id > 0 ? $service->get_overrides( $service_id ) : array();
 
 		$form_action = admin_url( 'admin-post.php' );
 		$page_title  = $service_id > 0 ? __( 'Edit Service', 'glamlux-core' ) : __( 'Add New Service', 'glamlux-core' );

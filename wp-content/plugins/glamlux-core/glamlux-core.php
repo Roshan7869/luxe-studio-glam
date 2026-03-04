@@ -167,6 +167,7 @@ function run_glamlux_core()
 	// Group 2 Repositories
 	require_once GLAMLUX_PLUGIN_DIR . 'repositories/class-glamlux-repo-appointment.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'repositories/class-glamlux-repo-lead.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'repositories/class-glamlux-repo-service.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'repositories/class-glamlux-repo-territory.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'repositories/class-glamlux-repo-membership.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'repositories/class-glamlux-repo-gdpr.php';
@@ -190,6 +191,7 @@ function run_glamlux_core()
 	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-service-booking.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-service-staff.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-service-lead.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-service-service.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-service-territory.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-service-membership.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-service-inventory.php';

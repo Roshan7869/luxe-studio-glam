@@ -50,8 +50,10 @@ if ($redis_host && file_exists($redis_dropin)) {
     if ($redis_pass)
         define('WP_REDIS_PASSWORD', $redis_pass);
 
-    // Prevent Redis from evicting core DB payload caches
-    define('WP_REDIS_MAXMEMORY_POLICY', 'noeviction');
+    // PHASE 5: Smart cache eviction policy prevents OOM crashes
+    // allkeys-lru will evict least-recently-used keys when memory limit is reached
+    // instead of rejecting writes and crashing the application
+    define('WP_REDIS_MAXMEMORY_POLICY', 'allkeys-lru');
     define('WP_REDIS_MAXMEMORY', '256M');
 }
 else {
@@ -60,12 +62,6 @@ else {
 
 // Disable WP-Cron — Railway scheduled job handles this
 define('DISABLE_WP_CRON', true);
-
-// JWT Secret for headless authentication — must be set in Railway environment variables
-if (!getenv('GLAMLUX_JWT_SECRET')) {
-    error_log('[GlamLux] GLAMLUX_JWT_SECRET env var is not set. JWT will fall back to wp_salt() (lower security).');
-}
-define('GLAMLUX_JWT_SECRET', getenv('GLAMLUX_JWT_SECRET') ?: wp_salt('auth'));
 
 if (!defined('ABSPATH'))
     define('ABSPATH', __DIR__ . '/');

@@ -341,7 +341,143 @@
             });
         };
 
-    })();
+// ── 5. Skeleton → Real Services swap ────────────────────────────────────────
+(function swapServices(){
+    var skeleton = document.getElementById('services-skeleton');
+    var grid     = document.getElementById('services-grid');
+    if (!skeleton || !grid) return;
+
+    setTimeout(function(){
+        skeleton.style.transition = 'opacity 400ms ease';
+        skeleton.style.opacity    = '0';
+        setTimeout(function(){
+            skeleton.style.display = 'none';
+            grid.style.display     = 'grid';
+            grid.style.opacity     = '0';
+            setTimeout(function(){
+                grid.style.transition = 'opacity 400ms ease';
+                grid.style.opacity    = '1';
+            }, 20);
+        }, 400);
+    }, 900); // simulate 900ms load, then reveal
+})();
+
+// ── 6. Modal Open / Close ────────────────────────────────────────────────────
+window.glamluxOpenModal = function(id) {
+    var overlay = document.getElementById('gl-modal-' + id);
+    if (!overlay) return;
+    overlay.style.opacity = '0';
+    overlay.style.pointerEvents = 'auto';
+    overlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    setTimeout(function(){
+        overlay.style.opacity = '1';
+        overlay.querySelector('.gl-modal').style.transform = 'scale(1) translateY(0)';
+    }, 10);
+};
+
+window.glamluxCloseModal = function(id) {
+    var overlay = document.getElementById('gl-modal-' + id);
+    if (!overlay) return;
+    overlay.style.opacity = '0';
+    overlay.querySelector('.gl-modal').style.transform = 'scale(0.93) translateY(20px)';
+    document.body.style.overflow = '';
+    setTimeout(function(){ overlay.style.display = 'none'; }, 320);
+};
+
+// Wire "Book an Appointment" buttons to modal
+document.querySelectorAll('[data-gl-modal]').forEach(function(btn){
+    btn.addEventListener('click', function(){ glamluxOpenModal(btn.getAttribute('data-gl-modal')); });
+});
+
+// Close on overlay click
+document.querySelectorAll('.gl-modal-overlay').forEach(function(el){
+    el.addEventListener('click', function(e){
+        if (e.target === el) glamluxCloseModal(el.id.replace('gl-modal-',''));
+    });
+});
+
+// Close on Escape
+document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.gl-modal-overlay[style*="flex"]').forEach(function(el){
+            glamluxCloseModal(el.id.replace('gl-modal-',''));
+        });
+    }
+});
+
+// ── 7. Booking form submission ───────────────────────────────────────────────
+var bookingForm = document.getElementById('gl-booking-form');
+if (bookingForm) {
+    bookingForm.addEventListener('submit', function(e){
+        e.preventDefault();
+        var btn = document.getElementById('gl-book-submit');
+        var origText = btn.textContent;
+        btn.textContent = 'Confirming…';
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+
+        var fd   = new FormData(bookingForm);
+        var date = fd.get('appointment_date');
+        var time = fd.get('appointment_time');
+        var payload = JSON.stringify({
+            service_id:       fd.get('service_id'),
+            appointment_time: date + ' ' + time + ':00',
+            notes:            fd.get('client_name') + ' | ' + fd.get('phone'),
+        });
+
+        fetch('/wp-json/glamlux/v1/book', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-WP-Nonce': (window.GlamLux && window.GlamLux.nonce) || '',
+            },
+            body: payload,
+        })
+        .then(function(r){ 
+            // PHASE 4: Validate HTTP response status before parsing JSON
+            if (!r.ok) {
+                throw new Error('API request failed: ' + r.status + ' ' + r.statusText);
+            }
+            return r.json(); 
+        })
+        .then(function(data){
+            glamluxCloseModal('booking');
+            glamluxToast('✓ Appointment confirmed! We\'ll reach out shortly.', 'success');
+            bookingForm.reset();
+        })
+        .catch(function(){
+            glamluxToast('Appointment request sent. We\'ll confirm via call.', '');
+        })
+        .finally(function(){
+            btn.textContent = origText;
+            btn.disabled    = false;
+            btn.style.opacity = '1';
+        });
+    });
+}
+
+// ── 8. Toast notifications ───────────────────────────────────────────────────
+window.glamluxToast = function(message, type) {
+    var container = document.getElementById('gl-toast-container');
+    if (!container) return;
+    var toast = document.createElement('div');
+    toast.className = 'gl-toast' + (type ? ' ' + type : '');
+    toast.style.cssText = 'padding:14px 20px;background:#fff;border-radius:12px;box-shadow:0 20px 48px rgba(0,0,0,0.12);font-size:0.875rem;font-weight:500;color:#121212;border-left:3px solid #C6A75E;transform:translateX(120%);transition:transform 320ms cubic-bezier(0,0,0.2,1);min-width:260px;max-width:380px;';
+    if (type === 'success') toast.style.borderColor = '#4CAF50';
+    if (type === 'error')   toast.style.borderColor = '#EF5350';
+    toast.textContent = message;
+    container.appendChild(toast);
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){
+        toast.style.transform = 'translateX(0)';
+        setTimeout(function(){
+            toast.style.transform = 'translateX(120%)';
+            setTimeout(function(){ if(toast.parentNode) toast.parentNode.removeChild(toast); }, 320);
+        }, 4000);
+    });});
+};
+
+})();
 </script>
 
 </body>

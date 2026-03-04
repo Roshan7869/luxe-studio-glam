@@ -124,29 +124,51 @@ class GlamLux_Service_Lead
 			return new WP_Error('glamlux_lead_not_found', 'Lead not found.', ['status' => 404]);
 		}
 
-		$updated = $this->repo->update_lead_status($id, $status);
-		if (!$updated)
-			return false;
-
-		// Log a completed follow-up note for audit trail
-		if ($notes) {
-			$this->repo->insert_followup([
-				'lead_id' => $id,
-				'type' => 'status_change_' . $status,
-				'notes' => sanitize_textarea_field($notes),
-				'status' => 'completed',
-				'due_at' => current_time('mysql'),
-				'completed_at' => current_time('mysql'),
-			]);
-		}
-
-		// Fire conversion event for downstream listeners (notify, analytics)
-		if ($status === 'converted') {
-			do_action('glamlux_lead_converted', $id);
-			if ($this->dispatcher) {
-				$this->dispatcher->dispatch('lead_converted', ['lead_id' => $id]);
+		// PHASE 2: Wrap update + followup insert in atomic transaction
+		// Prevents audit trail corruption if secondary insert fails
+		global $wpdb;
+		$wpdb->query('START TRANSACTION');
+		
+		try {
+			$updated = $this->repo->update_lead_status($id, $status);
+			if (!$updated) {
+				$wpdb->query('ROLLBACK');
+				return false;
 			}
+
+			// Log a completed follow-up note for audit trail
+			if ($notes) {
+				$inserted = $this->repo->insert_followup([
+					'lead_id' => $id,
+					'type' => 'status_change_' . $status,
+					'notes' => sanitize_textarea_field($notes),
+					'status' => 'completed',
+					'due_at' => current_time('mysql'),
+					'completed_at' => current_time('mysql'),
+				]);
+				
+				if (!$inserted) {
+					$wpdb->query('ROLLBACK');
+					return new WP_Error('audit_trail_failed', 'Failed to log status change.', ['status' => 500]);
+				}
+			}
+
+			$wpdb->query('COMMIT');
+			
+			// Fire conversion event for downstream listeners (notify, analytics)
+			if ($status === 'converted') {
+				do_action('glamlux_lead_converted', $id);
+				if ($this->dispatcher) {
+					$this->dispatcher->dispatch('lead_converted', ['lead_id' => $id]);
+				}
+			}
+			
+			return true;
+		} catch (Exception $e) {
+			$wpdb->query('ROLLBACK');
+			return new WP_Error('transaction_failed', $e->getMessage(), ['status' => 500]);
 		}
+	}
 
 		return true;
 	}
