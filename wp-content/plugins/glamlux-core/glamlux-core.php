@@ -119,6 +119,42 @@ if (!wp_next_scheduled('glamlux_token_cleanup')) {
 	wp_schedule_event(time(), 'daily', 'glamlux_token_cleanup');
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Initialize Architecture Enhancement (PHASE 1)
+// ─────────────────────────────────────────────────────────────────────────────
+require_once GLAMLUX_PLUGIN_DIR . 'core/class-event-dispatcher.php';
+
+// Register event queue processor
+add_action('glamlux_process_event_queue', function () {
+	GlamLux_Event_Dispatcher::process_queue();
+});
+
+// Register event queue cleanup
+add_action('glamlux_cleanup_event_queue', function () {
+	GlamLux_Event_Dispatcher::cleanup_old_events();
+});
+
+// Schedule event queue processing every 5 minutes
+if (!wp_next_scheduled('glamlux_process_event_queue')) {
+	wp_schedule_event(time(), 'every_five_minutes', 'glamlux_process_event_queue');
+}
+
+// Schedule event queue cleanup daily
+if (!wp_next_scheduled('glamlux_cleanup_event_queue')) {
+	wp_schedule_event(time(), 'daily', 'glamlux_cleanup_event_queue');
+}
+
+// Add custom 5-minute interval to WordPress cron
+add_filter('cron_schedules', function ($schedules) {
+	if (!isset($schedules['every_five_minutes'])) {
+		$schedules['every_five_minutes'] = [
+			'interval' => 300,
+			'display' => __('Every 5 minutes', 'glamlux-core')
+		];
+	}
+	return $schedules;
+});
+
 // Role capabilities are now updated ONLY on plugin activation/upgrade to save performance.
 // ─────────────────────────────────────────────────────────────────────────────
 // Bootstrap — Enterprise Module Loader (v3.0.0)
@@ -163,6 +199,7 @@ function run_glamlux_core()
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-operations-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-gdpr-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-health-controller.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-event-queue-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-rest-manager.php';
 
 	// ── STEP 2: Event Bus (load FIRST — all services depend on it) ───────────

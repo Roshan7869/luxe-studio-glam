@@ -223,6 +223,26 @@ class GlamLux_Activator
 				KEY last_activity (last_activity)
 			) $charset_collate;");
 		}
+
+		// Phase 1: Event Queue for async processing
+		if (!self::table_exists($wpdb->prefix . 'gl_event_queue')) {
+			dbDelta("CREATE TABLE {$wpdb->prefix}gl_event_queue (
+				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+				event_id varchar(36) NOT NULL,
+				event_name varchar(255) NOT NULL,
+				event_data longtext NOT NULL,
+				priority tinyint DEFAULT 10,
+				user_id bigint(20) unsigned,
+				status varchar(50) DEFAULT 'pending',
+				error_message text,
+				created_at datetime DEFAULT CURRENT_TIMESTAMP,
+				processed_at datetime,
+				PRIMARY KEY (id),
+				KEY status_priority (status, priority),
+				KEY created_at (created_at),
+				KEY event_id (event_id)
+			) $charset_collate;");
+		}
 	}
 
 	/**
