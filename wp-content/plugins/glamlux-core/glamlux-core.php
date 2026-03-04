@@ -123,6 +123,7 @@ if (!wp_next_scheduled('glamlux_token_cleanup')) {
 // Initialize Architecture Enhancement (PHASE 1)
 // ─────────────────────────────────────────────────────────────────────────────
 require_once GLAMLUX_PLUGIN_DIR . 'core/class-event-dispatcher.php';
+require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-firebase-messaging.php';
 
 // Register event queue processor
 add_action('glamlux_process_event_queue', function () {
@@ -134,6 +135,12 @@ add_action('glamlux_cleanup_event_queue', function () {
 	GlamLux_Event_Dispatcher::cleanup_old_events();
 });
 
+// Register device token cleanup
+add_action('glamlux_cleanup_device_tokens', function () {
+	$fcm = new GlamLux_Firebase_Messaging();
+	$fcm->cleanup_inactive_tokens(90);
+});
+
 // Schedule event queue processing every 5 minutes
 if (!wp_next_scheduled('glamlux_process_event_queue')) {
 	wp_schedule_event(time(), 'every_five_minutes', 'glamlux_process_event_queue');
@@ -142,6 +149,11 @@ if (!wp_next_scheduled('glamlux_process_event_queue')) {
 // Schedule event queue cleanup daily
 if (!wp_next_scheduled('glamlux_cleanup_event_queue')) {
 	wp_schedule_event(time(), 'daily', 'glamlux_cleanup_event_queue');
+}
+
+// Schedule device token cleanup daily
+if (!wp_next_scheduled('glamlux_cleanup_device_tokens')) {
+	wp_schedule_event(time(), 'daily', 'glamlux_cleanup_device_tokens');
 }
 
 // Add custom 5-minute interval to WordPress cron
@@ -200,6 +212,7 @@ function run_glamlux_core()
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-gdpr-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-health-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-event-queue-controller.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-push-notifications-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-rest-manager.php';
 
 	// ── STEP 2: Event Bus (load FIRST — all services depend on it) ───────────
