@@ -141,6 +141,33 @@ add_action('glamlux_cleanup_device_tokens', function () {
 	$fcm->cleanup_inactive_tokens(90);
 });
 
+// Schedule job queue processing
+add_action('glamlux_process_job_queue', function () {
+	GlamLux_Message_Queue::process_queue(25);
+});
+
+if (!wp_next_scheduled('glamlux_process_job_queue')) {
+	wp_schedule_event(time(), 'every_five_minutes', 'glamlux_process_job_queue');
+}
+
+// Schedule job queue cleanup
+add_action('glamlux_cleanup_job_queue', function () {
+	GlamLux_Message_Queue::cleanup_old_jobs(30);
+});
+
+if (!wp_next_scheduled('glamlux_cleanup_job_queue')) {
+	wp_schedule_event(time(), 'daily', 'glamlux_cleanup_job_queue');
+}
+
+// Schedule web push cleanup
+add_action('glamlux_cleanup_web_push', function () {
+	GlamLux_Web_Push::cleanup_expired_subscriptions(90);
+});
+
+if (!wp_next_scheduled('glamlux_cleanup_web_push')) {
+	wp_schedule_event(time(), 'daily', 'glamlux_cleanup_web_push');
+}
+
 // Schedule event queue processing every 5 minutes
 if (!wp_next_scheduled('glamlux_process_event_queue')) {
 	wp_schedule_event(time(), 'every_five_minutes', 'glamlux_process_event_queue');
@@ -198,6 +225,11 @@ function run_glamlux_core()
 	require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-jwt-auth.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-rate-limiter.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-shortcodes.php';
+
+	// ── PHASE 1 WEEK 4: MESSAGE QUEUE & RATE LIMITING ────────────────
+	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-message-queue.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-rate-limiter.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-web-push.php';
 	if (defined('WP_CLI') && WP_CLI) {
 		require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-cli-health.php';
 	}

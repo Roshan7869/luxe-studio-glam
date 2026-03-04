@@ -263,6 +263,46 @@ class GlamLux_Activator
                 UNIQUE KEY token_unique (token(128))
             ) $charset_collate;");
         }
+
+        // Phase 1 Week 4: Job Queue for message processing
+        if (!self::table_exists($wpdb->prefix . 'gl_job_queue')) {
+            dbDelta("CREATE TABLE {$wpdb->prefix}gl_job_queue (
+                id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+                job_id varchar(36) NOT NULL UNIQUE,
+                job_type varchar(255) NOT NULL,
+                payload longtext NOT NULL,
+                priority tinyint DEFAULT 10,
+                status varchar(50) DEFAULT 'pending',
+                error_message text,
+                execute_at datetime DEFAULT CURRENT_TIMESTAMP,
+                completed_at datetime,
+                failed_at datetime,
+                retry_count tinyint DEFAULT 0,
+                created_at datetime DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY status_priority (status, priority),
+                KEY execute_at (execute_at),
+                KEY job_type (job_type),
+                KEY created_at (created_at)
+            ) $charset_collate;");
+        }
+
+        // Phase 1 Week 4: Web Push Subscriptions
+        if (!self::table_exists($wpdb->prefix . 'gl_web_push_subscriptions')) {
+            dbDelta("CREATE TABLE {$wpdb->prefix}gl_web_push_subscriptions (
+                id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+                user_id bigint(20) unsigned NOT NULL,
+                endpoint text NOT NULL,
+                auth_key varchar(255),
+                p256dh_key varchar(255),
+                user_agent text,
+                created_at datetime DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY user_id (user_id),
+                KEY created_at (created_at),
+                UNIQUE KEY endpoint_unique (endpoint(255))
+            ) $charset_collate;");
+        }
     }
 
 	/**
