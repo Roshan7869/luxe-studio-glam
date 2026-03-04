@@ -1,57 +1,210 @@
 <?php
+
 /**
- * JWT Authentication Manager — Sprint C
+ * GlamLux JWT Authentication Handler
  *
- * Provides standalone HS256 JWT encoding/decoding specifically built
- * for headless mobile app authentication. Avoids external composer dependencies
- * so that the plugin remains portable across all environments.
+ * Manages JWT token creation, validation, expiration, and refresh token lifecycle.
+ * Supports token revocation and session tracking.
  *
- * Requires `GLAMLUX_JWT_SECRET` constant in wp-config.php.
- * Falls back to wp_salt('auth') if missing, but warns in logs.
- *
- * LAYER: Infrastructure / Security
+ * @package GlamLux
+ * @subpackage Core
+ * @since 7.0
  */
+
+if (!defined('ABSPATH')) {
+    exit('Direct access not allowed');
+}
+
 class GlamLux_JWT_Auth
 {
+    const DEFAULT_EXPIRATION_HOURS = 24;
+    const REFRESH_TOKEN_EXPIRATION_DAYS = 30;
+
     /**
-     * Hook into WordPress initialization
+     * Create a JWT token with expiration
      */
-    public static function init()
+    public static function encode($data, $expiration_hours = self::DEFAULT_EXPIRATION_HOURS)
     {
-        add_filter('determine_current_user', [__CLASS__, 'determine_current_user'], 10, 1);
+        $payload = [
+            'data' => $data,
+            'iat' => time(),
+            'exp' => time() + ($expiration_hours * HOUR_IN_SECONDS)
+        ];
+
+        $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
+        $body = json_encode($payload);
+
+        $enc_header = self::base64url_encode($header);
+        $enc_body = self::base64url_encode($body);
+
+        $signature = hash_hmac('sha256', $enc_header . "." . $enc_body, self::get_secret(), true);
+        $enc_sign = self::base64url_encode($signature);
+
+        return $enc_header . "." . $enc_body . "." . $enc_sign;
     }
 
     /**
-     * Intercept WP user context with JWT if present
+     * Decode and validate JWT token
      */
-    public static function determine_current_user($user_id)
+    public static function decode($token)
     {
-        if ($user_id) {
-            return $user_id; // Already determined via cookies/session
+        $parts = explode('.', $token);
+        if (count($parts) !== 3) {
+            return new WP_Error('invalid_token_format', 'Invalid token format');
         }
 
-        $header = isset($_SERVER['HTTP_AUTHORIZATION']) ? $_SERVER['HTTP_AUTHORIZATION'] : '';
-        if (empty($header) && function_exists('apache_request_headers')) {
-            $headers = apache_request_headers();
-            $header = isset($headers['Authorization']) ? $headers['Authorization'] : '';
+        [$header_enc, $body_enc, $sig_enc] = $parts;
+
+        // Verify signature
+        $expected_sig = hash_hmac('sha256', $header_enc . "." . $body_enc, self::get_secret(), true);
+        $expected_sig_enc = self::base64url_encode($expected_sig);
+
+        if (!hash_equals($sig_enc, $expected_sig_enc)) {
+            return new WP_Error('invalid_signature', 'Invalid token signature');
         }
 
-        if (empty($header) || strpos(trim($header), 'Bearer ') !== 0) {
-            return $user_id;
+        // Decode payload
+        $payload_json = self::base64url_decode($body_enc);
+        if (!$payload_json) {
+            return new WP_Error('invalid_payload', 'Cannot decode payload');
         }
 
-        $token = trim(substr(trim($header), 7));
+        $payload = json_decode($payload_json);
+
+        // Check expiration
+        if (!isset($payload->exp) || $payload->exp < time()) {
+            return new WP_Error('token_expired', 'Token has expired');
+        }
+
+        return $payload;
+    }
+
+    /**
+     * Check if token is revoked (blacklisted)
+     */
+    public static function is_token_revoked($token): bool
+    {
+        global $wpdb;
+
+        $token_hash = hash('sha256', $token);
+        $result = $wpdb->get_var($wpdb->prepare(
+            "SELECT 1 FROM {$wpdb->prefix}gl_token_blacklist WHERE token_hash = %s LIMIT 1",
+            $token_hash
+        ));
+
+        return (bool)$result;
+    }
+
+    /**
+     * Revoke a token (logout)
+     */
+    public static function revoke_token($token, $reason = 'logout'): bool
+    {
+        global $wpdb;
+
         $payload = self::decode($token);
-
-        if (is_wp_error($payload) || empty($payload->data->user->id)) {
-            return $user_id;
+        if (is_wp_error($payload)) {
+            return false;
         }
 
-        return $payload->data->user->id;
+        $token_hash = hash('sha256', $token);
+
+        $result = $wpdb->insert(
+            $wpdb->prefix . 'gl_token_blacklist',
+            [
+                'user_id' => (int)$payload->data->user->id,
+                'token_hash' => $token_hash,
+                'revoked_at' => current_time('mysql'),
+                'reason' => sanitize_text_field($reason)
+            ],
+            ['%d', '%s', '%s', '%s']
+        );
+
+        return $result !== false;
     }
 
     /**
-     * Retrieve the HS256 secret.
+     * Generate refresh token (long-lived, used to get new access tokens)
+     */
+    public static function generate_refresh_token($user_id): string
+    {
+        global $wpdb;
+
+        $refresh_token = bin2hex(random_bytes(32));
+        $token_hash = hash('sha256', $refresh_token);
+
+        $wpdb->insert(
+            $wpdb->prefix . 'gl_refresh_tokens',
+            [
+                'user_id' => absint($user_id),
+                'token_hash' => $token_hash,
+                'expires_at' => date('Y-m-d H:i:s', strtotime('+' . self::REFRESH_TOKEN_EXPIRATION_DAYS . ' days')),
+                'created_at' => current_time('mysql'),
+                'ip_address' => $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1',
+                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? ''
+            ]
+        );
+
+        return $refresh_token;
+    }
+
+    /**
+     * Validate and exchange refresh token for new access token
+     */
+    public static function refresh_access_token($refresh_token)
+    {
+        global $wpdb;
+
+        $token_hash = hash('sha256', $refresh_token);
+
+        $row = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}gl_refresh_tokens 
+             WHERE token_hash = %s 
+             AND expires_at > NOW()",
+            $token_hash
+        ));
+
+        if (!$row) {
+            return new WP_Error('invalid_refresh_token', 'Invalid or expired refresh token');
+        }
+
+        // Generate new access token
+        $new_token = self::encode(['user_id' => $row->user_id], self::DEFAULT_EXPIRATION_HOURS);
+
+        // Update last_used_at
+        $wpdb->update(
+            $wpdb->prefix . 'gl_refresh_tokens',
+            ['last_used_at' => current_time('mysql')],
+            ['id' => $row->id]
+        );
+
+        return $new_token;
+    }
+
+    /**
+     * Cleanup expired refresh tokens and old blacklist entries (runs daily via WP-Cron)
+     */
+    public static function cleanup_expired_tokens()
+    {
+        global $wpdb;
+
+        // Delete expired refresh tokens (older than 30 days + 7 day grace period)
+        $wpdb->query(
+            "DELETE FROM {$wpdb->prefix}gl_refresh_tokens 
+             WHERE expires_at < DATE_SUB(NOW(), INTERVAL 7 DAY)"
+        );
+
+        // Delete old blacklist entries (older than 90 days)
+        $wpdb->query(
+            "DELETE FROM {$wpdb->prefix}gl_token_blacklist 
+             WHERE revoked_at < DATE_SUB(NOW(), INTERVAL 90 DAY)"
+        );
+
+        glamlux_log_error('Token cleanup completed', ['timestamp' => current_time('mysql')]);
+    }
+
+    /**
+     * Retrieve the HS256 secret
      */
     private static function get_secret(): string
     {
@@ -70,7 +223,7 @@ class GlamLux_JWT_Auth
     }
 
     /**
-     * Base64Url encode string (URL safe, no padding).
+     * Base64Url encode string (URL safe, no padding)
      */
     private static function base64url_encode(string $data): string
     {
@@ -78,61 +231,11 @@ class GlamLux_JWT_Auth
     }
 
     /**
-     * Encode a payload into a JWT string.
-     * Automatically adds standard fields (iat, iss).
+     * Base64Url decode string
      */
-    public static function encode(array $payload): string
+    private static function base64url_decode(string $data): string
     {
-        $payload['iat'] = time();
-        $payload['iss'] = site_url();
-
-        $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
-        $body = json_encode($payload);
-
-        $enc_header = self::base64url_encode($header);
-        $enc_body = self::base64url_encode($body);
-
-        $signature = hash_hmac('sha256', $enc_header . "." . $enc_body, self::get_secret(), true);
-        $enc_sign = self::base64url_encode($signature);
-
-        return $enc_header . "." . $enc_body . "." . $enc_sign;
-    }
-
-    /**
-     * Decode and verify a JWT string.
-     *
-     * @return object|WP_Error Payload object on success, WP_Error on failure.
-     */
-    public static function decode(string $jwt)
-    {
-        $tokenParts = explode('.', $jwt);
-        if (count($tokenParts) !== 3) {
-            return new \WP_Error('invalid_token', 'Malformed JWT token format.', ['status' => 401]);
-        }
-
-        list($enc_header, $enc_body, $enc_sign) = $tokenParts;
-
-        $header = json_decode(base64_decode(str_replace(['-', '_'], ['+', '/'], $enc_header)));
-        $payload = json_decode(base64_decode(str_replace(['-', '_'], ['+', '/'], $enc_body)));
-
-        if (!$header || !isset($header->alg) || $header->alg !== 'HS256') {
-            return new \WP_Error('unsupported_algorithm', 'Only HS256 algorithm is supported.', ['status' => 401]);
-        }
-
-        // Verify Expiration
-        if (isset($payload->exp) && $payload->exp < time()) {
-            return new \WP_Error('expired_token', 'JWT Token has expired.', ['status' => 401]);
-        }
-
-        // Verify Signature
-        $expected_signature = hash_hmac('sha256', $enc_header . "." . $enc_body, self::get_secret(), true);
-        $expected_sign = self::base64url_encode($expected_signature);
-
-        if (!hash_equals($expected_sign, $enc_sign)) {
-            return new \WP_Error('invalid_signature', 'JWT signature verification failed.', ['status' => 401]);
-        }
-
-        return $payload;
+        return base64_decode(str_replace(['-', '_'], ['+', '/'], $data), true);
     }
 
     /**
@@ -145,14 +248,25 @@ class GlamLux_JWT_Auth
     {
         $header = $request->get_header('authorization');
         if (empty($header)) {
-            return new \WP_Error('missing_auth', 'Missing Authorization Bearer Header.', ['status' => 401]);
+            return new WP_Error('missing_auth', 'Missing Authorization Bearer Header.', ['status' => 401]);
         }
 
         if (trim(substr($header, 0, 6)) !== 'Bearer') {
-            return new \WP_Error('invalid_auth_format', 'Authorization header must be Bearer type.', ['status' => 401]);
+            return new WP_Error('invalid_auth_format', 'Authorization header must be Bearer type.', ['status' => 401]);
         }
 
         $token = trim(substr($header, 6));
-        return self::decode($token);
+        $payload = self::decode($token);
+        
+        if (is_wp_error($payload)) {
+            return $payload;
+        }
+        
+        // Check if token is revoked
+        if (self::is_token_revoked($token)) {
+            return new WP_Error('revoked_token', 'This token has been revoked.', ['status' => 401]);
+        }
+        
+        return $payload;
     }
 }

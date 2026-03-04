@@ -103,6 +103,22 @@ function glamlux_maybe_upgrade()
 }
 add_action('plugins_loaded', 'glamlux_maybe_upgrade', 1);
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Initialize Security Hardening (PHASE 0)
+// ─────────────────────────────────────────────────────────────────────────────
+require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-security-headers.php';
+
+// Register JWT token cleanup cron task
+require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-jwt-auth.php';
+add_action('glamlux_token_cleanup', function () {
+	GlamLux_JWT_Auth::cleanup_expired_tokens();
+});
+
+// Schedule daily token cleanup if not already scheduled
+if (!wp_next_scheduled('glamlux_token_cleanup')) {
+	wp_schedule_event(time(), 'daily', 'glamlux_token_cleanup');
+}
+
 // Role capabilities are now updated ONLY on plugin activation/upgrade to save performance.
 // ─────────────────────────────────────────────────────────────────────────────
 // Bootstrap — Enterprise Module Loader (v3.0.0)

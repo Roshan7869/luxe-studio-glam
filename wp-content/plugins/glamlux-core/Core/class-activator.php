@@ -63,6 +63,9 @@ class GlamLux_Activator
 			}
 		}
 
+		// PHASE 0 SECURITY: Add JWT token management tables
+		self::create_token_management_tables();
+
 		$version = (int)get_option('glamlux_migration_version', 0);
 		$target_version = 6;
 
@@ -159,6 +162,67 @@ class GlamLux_Activator
 
 		// Conclude PHASE 0.1
 		update_option('glamlux_db_version', GLAMLUX_DB_VERSION);
+	}
+
+	/**
+	 * Create token management tables for JWT authentication
+	 */
+	private static function create_token_management_tables(): void
+	{
+		global $wpdb;
+		$charset_collate = $wpdb->get_charset_collate();
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+		// Token Blacklist: Revoked tokens
+		if (!self::table_exists($wpdb->prefix . 'gl_token_blacklist')) {
+			dbDelta("CREATE TABLE {$wpdb->prefix}gl_token_blacklist (
+				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+				user_id bigint(20) unsigned NOT NULL,
+				token_hash varchar(64) NOT NULL,
+				revoked_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				reason varchar(100) DEFAULT 'logout',
+				PRIMARY KEY (id),
+				UNIQUE KEY token_hash (token_hash),
+				KEY user_id (user_id),
+				KEY revoked_at (revoked_at)
+			) $charset_collate;");
+		}
+
+		// Refresh Tokens: Long-lived tokens for token rotation
+		if (!self::table_exists($wpdb->prefix . 'gl_refresh_tokens')) {
+			dbDelta("CREATE TABLE {$wpdb->prefix}gl_refresh_tokens (
+				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+				user_id bigint(20) unsigned NOT NULL,
+				token_hash varchar(64) NOT NULL,
+				expires_at datetime NOT NULL,
+				created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				last_used_at datetime DEFAULT NULL,
+				ip_address varchar(45) DEFAULT NULL,
+				user_agent text DEFAULT NULL,
+				PRIMARY KEY (id),
+				UNIQUE KEY token_hash (token_hash),
+				KEY user_id (user_id),
+				KEY expires_at (expires_at)
+			) $charset_collate;");
+		}
+
+		// Token Sessions: Track active sessions for audit
+		if (!self::table_exists($wpdb->prefix . 'gl_token_sessions')) {
+			dbDelta("CREATE TABLE {$wpdb->prefix}gl_token_sessions (
+				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+				user_id bigint(20) unsigned NOT NULL,
+				session_id varchar(64) NOT NULL,
+				device_name varchar(255) DEFAULT NULL,
+				ip_address varchar(45) DEFAULT NULL,
+				user_agent text DEFAULT NULL,
+				last_activity datetime DEFAULT CURRENT_TIMESTAMP,
+				created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				PRIMARY KEY (id),
+				UNIQUE KEY session_id (session_id),
+				KEY user_id (user_id),
+				KEY last_activity (last_activity)
+			) $charset_collate;");
+		}
 	}
 
 	/**
