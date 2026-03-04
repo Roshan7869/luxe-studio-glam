@@ -194,6 +194,43 @@ add_filter('cron_schedules', function ($schedules) {
 	return $schedules;
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Initialize Operational Management (PHASE 2)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Logging system
+require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-logger.php';
+
+// Performance monitoring
+require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-performance.php';
+add_action('init', function () {
+	GlamLux_Performance::init();
+});
+
+// Alerting system
+require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-alerts.php';
+add_action('init', function () {
+	GlamLux_Alerts::init();
+});
+
+// Register health check cron
+add_action('glamlux_check_health_thresholds', function () {
+	GlamLux_Alerts::check_thresholds();
+});
+
+if (!wp_next_scheduled('glamlux_check_health_thresholds')) {
+	wp_schedule_event(time(), 'every_five_minutes', 'glamlux_check_health_thresholds');
+}
+
+// Register performance log cleanup
+add_action('glamlux_cleanup_performance_logs', function () {
+	GlamLux_Performance::cleanup_old_metrics(7);
+});
+
+if (!wp_next_scheduled('glamlux_cleanup_performance_logs')) {
+	wp_schedule_event(time(), 'daily', 'glamlux_cleanup_performance_logs');
+}
+
 // Role capabilities are now updated ONLY on plugin activation/upgrade to save performance.
 // ─────────────────────────────────────────────────────────────────────────────
 // Bootstrap — Enterprise Module Loader (v3.0.0)
