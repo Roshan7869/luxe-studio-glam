@@ -213,7 +213,13 @@ function run_glamlux_core()
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-health-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-event-queue-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-push-notifications-controller.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-cache-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-rest-manager.php';
+
+	// ── PHASE 1 WEEK 3: CACHING LAYER ──────────────────────────────────
+	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-redis-cache.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-cache-invalidation.php';
+	GlamLux_Cache_Invalidation::init();
 
 	// ── STEP 2: Event Bus (load FIRST — all services depend on it) ───────────
 	require_once GLAMLUX_PLUGIN_DIR . 'Core/class-event-dispatcher.php';
