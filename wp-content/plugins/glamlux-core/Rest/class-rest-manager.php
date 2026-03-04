@@ -41,6 +41,17 @@ class GlamLux_REST_Manager
 			(new GlamLux_Operations_Controller())->register_routes();
 		}
 
+		// Phase 1: Event Queue, Push Notifications, Cache Management
+		if (class_exists('GlamLux_Event_Queue_Controller')) {
+			(new GlamLux_Event_Queue_Controller())->register_routes();
+		}
+		if (class_exists('GlamLux_Push_Notifications_Controller')) {
+			(new GlamLux_Push_Notifications_Controller())->register_routes();
+		}
+		if (class_exists('GlamLux_Cache_Controller')) {
+			(new GlamLux_Cache_Controller())->register_routes();
+		}
+
 		// Compliance & Observability
 		(new GlamLux_GDPR_Controller())->register_routes();
 		(new GlamLux_Health_Controller())->register_routes();

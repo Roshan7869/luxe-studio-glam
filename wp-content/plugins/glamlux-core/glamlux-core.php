@@ -103,6 +103,134 @@ function glamlux_maybe_upgrade()
 }
 add_action('plugins_loaded', 'glamlux_maybe_upgrade', 1);
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Initialize Security Hardening (PHASE 0)
+// ─────────────────────────────────────────────────────────────────────────────
+require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-security-headers.php';
+
+// Register JWT token cleanup cron task
+require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-jwt-auth.php';
+add_action('glamlux_token_cleanup', function () {
+	GlamLux_JWT_Auth::cleanup_expired_tokens();
+});
+
+// Schedule daily token cleanup if not already scheduled
+if (!wp_next_scheduled('glamlux_token_cleanup')) {
+	wp_schedule_event(time(), 'daily', 'glamlux_token_cleanup');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Initialize Architecture Enhancement (PHASE 1)
+// ─────────────────────────────────────────────────────────────────────────────
+require_once GLAMLUX_PLUGIN_DIR . 'core/class-event-dispatcher.php';
+require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-firebase-messaging.php';
+
+// Register event queue processor
+add_action('glamlux_process_event_queue', function () {
+	GlamLux_Event_Dispatcher::process_queue();
+});
+
+// Register event queue cleanup
+add_action('glamlux_cleanup_event_queue', function () {
+	GlamLux_Event_Dispatcher::cleanup_old_events();
+});
+
+// Register device token cleanup
+add_action('glamlux_cleanup_device_tokens', function () {
+	$fcm = new GlamLux_Firebase_Messaging();
+	$fcm->cleanup_inactive_tokens(90);
+});
+
+// Schedule job queue processing
+add_action('glamlux_process_job_queue', function () {
+	GlamLux_Message_Queue::process_queue(25);
+});
+
+if (!wp_next_scheduled('glamlux_process_job_queue')) {
+	wp_schedule_event(time(), 'every_five_minutes', 'glamlux_process_job_queue');
+}
+
+// Schedule job queue cleanup
+add_action('glamlux_cleanup_job_queue', function () {
+	GlamLux_Message_Queue::cleanup_old_jobs(30);
+});
+
+if (!wp_next_scheduled('glamlux_cleanup_job_queue')) {
+	wp_schedule_event(time(), 'daily', 'glamlux_cleanup_job_queue');
+}
+
+// Schedule web push cleanup
+add_action('glamlux_cleanup_web_push', function () {
+	GlamLux_Web_Push::cleanup_expired_subscriptions(90);
+});
+
+if (!wp_next_scheduled('glamlux_cleanup_web_push')) {
+	wp_schedule_event(time(), 'daily', 'glamlux_cleanup_web_push');
+}
+
+// Schedule event queue processing every 5 minutes
+if (!wp_next_scheduled('glamlux_process_event_queue')) {
+	wp_schedule_event(time(), 'every_five_minutes', 'glamlux_process_event_queue');
+}
+
+// Schedule event queue cleanup daily
+if (!wp_next_scheduled('glamlux_cleanup_event_queue')) {
+	wp_schedule_event(time(), 'daily', 'glamlux_cleanup_event_queue');
+}
+
+// Schedule device token cleanup daily
+if (!wp_next_scheduled('glamlux_cleanup_device_tokens')) {
+	wp_schedule_event(time(), 'daily', 'glamlux_cleanup_device_tokens');
+}
+
+// Add custom 5-minute interval to WordPress cron
+add_filter('cron_schedules', function ($schedules) {
+	if (!isset($schedules['every_five_minutes'])) {
+		$schedules['every_five_minutes'] = [
+			'interval' => 300,
+			'display' => __('Every 5 minutes', 'glamlux-core')
+		];
+	}
+	return $schedules;
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Initialize Operational Management (PHASE 2)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Logging system
+require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-logger.php';
+
+// Performance monitoring
+require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-performance.php';
+add_action('init', function () {
+	GlamLux_Performance::init();
+});
+
+// Alerting system
+require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-alerts.php';
+add_action('init', function () {
+	GlamLux_Alerts::init();
+});
+
+// Register health check cron
+add_action('glamlux_check_health_thresholds', function () {
+	GlamLux_Alerts::check_thresholds();
+});
+
+if (!wp_next_scheduled('glamlux_check_health_thresholds')) {
+	wp_schedule_event(time(), 'every_five_minutes', 'glamlux_check_health_thresholds');
+}
+
+// Register performance log cleanup
+add_action('glamlux_cleanup_performance_logs', function () {
+	GlamLux_Performance::cleanup_old_metrics(7);
+});
+
+if (!wp_next_scheduled('glamlux_cleanup_performance_logs')) {
+	wp_schedule_event(time(), 'daily', 'glamlux_cleanup_performance_logs');
+}
+
 // Role capabilities are now updated ONLY on plugin activation/upgrade to save performance.
 // ─────────────────────────────────────────────────────────────────────────────
 // Bootstrap — Enterprise Module Loader (v3.0.0)
@@ -134,6 +262,11 @@ function run_glamlux_core()
 	require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-jwt-auth.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-rate-limiter.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-shortcodes.php';
+
+	// ── PHASE 1 WEEK 4: MESSAGE QUEUE & RATE LIMITING ────────────────
+	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-message-queue.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-rate-limiter.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-web-push.php';
 	if (defined('WP_CLI') && WP_CLI) {
 		require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-cli-health.php';
 	}
@@ -147,7 +280,15 @@ function run_glamlux_core()
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-operations-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-gdpr-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-health-controller.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-event-queue-controller.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-push-notifications-controller.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-cache-controller.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-rest-manager.php';
+
+	// ── PHASE 1 WEEK 3: CACHING LAYER ──────────────────────────────────
+	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-redis-cache.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-cache-invalidation.php';
+	GlamLux_Cache_Invalidation::init();
 
 	// ── STEP 2: Event Bus (load FIRST — all services depend on it) ───────────
 	require_once GLAMLUX_PLUGIN_DIR . 'Core/class-event-dispatcher.php';

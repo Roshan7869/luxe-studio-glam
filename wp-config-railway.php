@@ -27,9 +27,32 @@ define('NONCE_SALT', getenv('NONCE_SALT') ?: 'Py2wF#5jS8nK0qAeZbTxGcMrVuDHiOL4!'
 $table_prefix = 'wp_';
 define('WP_DEBUG', false);
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PHASE 0: HTTPS/TLS ENFORCEMENT (SECURITY HARDENING)
+// ─────────────────────────────────────────────────────────────────────────────
+
 // Force HTTPS behind Railway proxy
-if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
-    $_SERVER['HTTPS'] = 'on';
+if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
+    $_SERVER['HTTPS'] = ($_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ? 'on' : 'off';
+}
+
+// CRITICAL: Enforce HTTPS in production environment
+if (defined('WP_ENVIRONMENT_TYPE') && WP_ENVIRONMENT_TYPE === 'production') {
+    // Redirect HTTP to HTTPS
+    if (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off') {
+        if (isset($_SERVER['HTTP_HOST']) && isset($_SERVER['REQUEST_URI'])) {
+            header('HTTP/1.1 301 Moved Permanently');
+            header('Location: https://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']);
+            exit;
+        }
+    }
+    
+    // HSTS: Force browsers to always use HTTPS (1 year with subdomains)
+    header('Strict-Transport-Security: max-age=31536000; includeSubDomains; preload');
+    
+    // Force secure cookies in production
+    define('FORCE_SSL_ADMIN', true);
+    define('FORCE_SSL_LOGIN', true);
 }
 
 // Dynamic site URL — works for any Railway subdomain or custom domain
@@ -37,6 +60,14 @@ if (!empty($_SERVER['HTTP_HOST'])) {
     $proto = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https://' : 'http://';
     define('WP_HOME', $proto . $_SERVER['HTTP_HOST']);
     define('WP_SITEURL', $proto . $_SERVER['HTTP_HOST']);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Set WP_ENVIRONMENT_TYPE if not already set (Railway integration)
+// ─────────────────────────────────────────────────────────────────────────────
+if (!defined('WP_ENVIRONMENT_TYPE')) {
+    $env = getenv('WP_ENVIRONMENT_TYPE') ?: 'development';
+    define('WP_ENVIRONMENT_TYPE', $env);
 }
 
 // Redis Object Cache — only enable if the drop-in actually exists (prevents crash when Redis is not yet available)
