@@ -33,6 +33,13 @@ function glamlux_log_error($message, $context = array())
 	do_action('glamlux_error_logged', $message, $context);
 }
 
+function glamlux_log($message, $context = array())
+{
+	if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
+		error_log('[GlamLux] ' . $message . (!empty($context) ? ' | Context: ' . wp_json_encode($context) : ''));
+	}
+}
+
 function glamlux_ajax_response($success, $message, $data = array(), $code = 200)
 {
 	$payload = array_merge(array('message' => $message), $data);
