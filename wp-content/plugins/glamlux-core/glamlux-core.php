@@ -112,6 +112,8 @@ add_action('plugins_loaded', 'glamlux_maybe_upgrade', 1);
 // Initialize Security Hardening (PHASE 0)
 // ─────────────────────────────────────────────────────────────────────────────
 require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-security-headers.php';
+require_once __DIR__ . '/vendor/autoload.php';
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Initialize Architecture Enhancement (PHASE 1)

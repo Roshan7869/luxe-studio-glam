@@ -25,7 +25,9 @@ define('LOGGED_IN_SALT', getenv('LOGGED_IN_SALT') ?: 'Hn9kT!1rU6vM3bPeXcLfIwSzJy
 define('NONCE_SALT', getenv('NONCE_SALT') ?: 'Py2wF#5jS8nK0qAeZbTxGcMrVuDHiOL4!');
 
 $table_prefix = 'wp_';
-define('WP_DEBUG', false);
+define('WP_DEBUG', true);
+define('WP_DEBUG_LOG', true);
+define('WP_DEBUG_DISPLAY', false);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Set WP_ENVIRONMENT_TYPE (must be before HTTPS enforcement)

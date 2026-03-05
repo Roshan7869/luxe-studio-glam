@@ -1,13 +1,13 @@
 {
     "name": "glamlux/core",
-    "description": "GlamLux Core System",
+    "description": "GlamLux Core Plugin",
     "type": "wordpress-plugin",
     "require": {
         "php": ">=7.4"
     },
     "autoload": {
         "psr-4": {
-            "GlamLux\\": "src/"
+            "GlamLux\\": "Core/"
         }
     }
 }

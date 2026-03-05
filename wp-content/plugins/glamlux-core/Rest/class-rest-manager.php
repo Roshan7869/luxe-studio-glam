@@ -54,7 +54,9 @@ class GlamLux_REST_Manager
 
 		// Compliance & Observability
 		(new GlamLux_GDPR_Controller())->register_routes();
-		(new GlamLux_Health_Controller())->register_routes();
+		if (class_exists('GlamLux_Health_Controller')) {
+			(new GlamLux_Health_Controller())->register_routes();
+		}
 
 		// Visual Dataset & Gallery Data
 		if (class_exists('GlamLux_Data_Controller')) {
@@ -163,9 +165,9 @@ class GlamLux_REST_Manager
 				if (!is_array($data) || (!isset($data['success']) && !isset($data['data']) && !isset($data['errors']))) {
 					$formatted = [
 						'success' => $is_success,
-						'data' => $is_success ? $data : (object)[],
+						'data' => $is_success ? $data : (object) [],
 						'errors' => $is_success ? [] : (is_array($data) ? $data : [$data]),
-						'meta' => (object)[]
+						'meta' => (object) []
 					];
 					$response->set_data($formatted);
 				}
