@@ -10,7 +10,7 @@
  * @since 7.3
  */
 
-class GlamLux_Rate_Limiter
+class GlamLux_Advanced_Rate_Limiter
 {
     private $cache;
 
@@ -237,7 +237,7 @@ add_filter('rest_pre_dispatch', function ($response, $server, $request) {
     // Only apply to specific endpoints
     $route = $request->get_route();
     if (strpos($route, '/glamlux/') !== false) {
-        return GlamLux_Rate_Limiter::rest_api_middleware($response, $server, $request);
+        return GlamLux_Advanced_Rate_Limiter::rest_api_middleware($response, $server, $request);
     }
 
     return $response;
