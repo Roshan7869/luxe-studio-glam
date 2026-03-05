@@ -80,7 +80,7 @@ class GlamLux_Event_Dispatcher
     private function execute_event($event, $payload, $event_id)
     {
         $all = array_merge($this->listeners[$event] ?? [], $this->core_map[$event] ?? []);
-        
+
         foreach ($all as $cb) {
             try {
                 if (is_array($cb) && is_string($cb[0]) && class_exists($cb[0])) {
@@ -182,38 +182,16 @@ class GlamLux_Event_Dispatcher
         global $wpdb;
 
         return [
-            'pending' => (int)$wpdb->get_var(
+            'pending' => (int) $wpdb->get_var(
                 "SELECT COUNT(*) FROM {$wpdb->prefix}gl_event_queue WHERE status = 'pending'"
             ),
-            'processed' => (int)$wpdb->get_var(
+            'processed' => (int) $wpdb->get_var(
                 "SELECT COUNT(*) FROM {$wpdb->prefix}gl_event_queue WHERE status = 'processed'"
             ),
-            'failed' => (int)$wpdb->get_var(
+            'failed' => (int) $wpdb->get_var(
                 "SELECT COUNT(*) FROM {$wpdb->prefix}gl_event_queue WHERE status = 'failed'"
             )
         ];
-    }
-
-    /**
-     * Cleanup old processed/failed events (>30 days)
-     */
-    public static function cleanup_old_events()
-    {
-        global $wpdb;
-
-        // Delete processed events older than 30 days
-        $wpdb->query(
-            "DELETE FROM {$wpdb->prefix}gl_event_queue
-             WHERE status IN ('processed', 'failed')
-             AND created_at < DATE_SUB(NOW(), INTERVAL 30 DAY)"
-        );
-
-        // Keep failed events for 90 days for investigation
-        $wpdb->query(
-            "DELETE FROM {$wpdb->prefix}gl_event_queue
-             WHERE status = 'failed'
-             AND created_at < DATE_SUB(NOW(), INTERVAL 90 DAY)"
-        );
     }
 
     /**
