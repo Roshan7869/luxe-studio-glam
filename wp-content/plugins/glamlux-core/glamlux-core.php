@@ -3,7 +3,7 @@
  * Plugin Name: GlamLux Core
  * Plugin URI:  https://glamlux2lux.com
  * Description: Enterprise Franchise Operating System — GlamLux2Lux. Domain-Driven Modular Monolith Architecture.
- * Version:     3.0.0
+ * Version:     3.1.0
  * Author:      Antigravity
  * Text Domain: glamlux-core
  */
@@ -12,7 +12,7 @@ if (!defined('WPINC')) {
 	die;
 }
 
-define('GLAMLUX_VERSION', '3.0.0');
+define('GLAMLUX_VERSION', '3.1.0');
 define('GLAMLUX_DB_VERSION', '3.0.0');
 define('GLAMLUX_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('GLAMLUX_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -25,8 +25,7 @@ function glamlux_log_error($message, $context = array())
 {
 	if (class_exists('GlamLux_Logger')) {
 		GlamLux_Logger::error($message, $context);
-	}
-	else {
+	} else {
 		if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
 			error_log('[GlamLux] ' . $message . (!empty($context) ? ' | Context: ' . wp_json_encode($context) : ''));
 		}
@@ -39,8 +38,7 @@ function glamlux_ajax_response($success, $message, $data = array(), $code = 200)
 	$payload = array_merge(array('message' => $message), $data);
 	if ($success) {
 		wp_send_json_success($payload, $code);
-	}
-	else {
+	} else {
 		wp_send_json_error($payload, $code);
 	}
 }
@@ -108,22 +106,35 @@ add_action('plugins_loaded', 'glamlux_maybe_upgrade', 1);
 // ─────────────────────────────────────────────────────────────────────────────
 require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-security-headers.php';
 
-// Register JWT token cleanup cron task
+// ─────────────────────────────────────────────────────────────────────────────
+// Initialize Architecture Enhancement (PHASE 1)
+// IMPORTANT: All require_once calls MUST come BEFORE class references.
+// ─────────────────────────────────────────────────────────────────────────────
 require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-jwt-auth.php';
+require_once GLAMLUX_PLUGIN_DIR . 'Core/class-event-dispatcher.php';
+require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-firebase-messaging.php';
+require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-message-queue.php';
+require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-web-push.php';
+
+// Add custom 5-minute interval to WordPress cron (MUST be registered BEFORE wp_schedule_event calls)
+add_filter('cron_schedules', function ($schedules) {
+	if (!isset($schedules['every_five_minutes'])) {
+		$schedules['every_five_minutes'] = [
+			'interval' => 300,
+			'display' => __('Every 5 minutes', 'glamlux-core')
+		];
+	}
+	return $schedules;
+});
+
+// Register JWT token cleanup cron task
 add_action('glamlux_token_cleanup', function () {
 	GlamLux_JWT_Auth::cleanup_expired_tokens();
 });
 
-// Schedule daily token cleanup if not already scheduled
 if (!wp_next_scheduled('glamlux_token_cleanup')) {
 	wp_schedule_event(time(), 'daily', 'glamlux_token_cleanup');
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Initialize Architecture Enhancement (PHASE 1)
-// ─────────────────────────────────────────────────────────────────────────────
-require_once GLAMLUX_PLUGIN_DIR . 'core/class-event-dispatcher.php';
-require_once GLAMLUX_PLUGIN_DIR . 'services/class-glamlux-firebase-messaging.php';
 
 // Register event queue processor
 add_action('glamlux_process_event_queue', function () {
@@ -182,17 +193,6 @@ if (!wp_next_scheduled('glamlux_cleanup_event_queue')) {
 if (!wp_next_scheduled('glamlux_cleanup_device_tokens')) {
 	wp_schedule_event(time(), 'daily', 'glamlux_cleanup_device_tokens');
 }
-
-// Add custom 5-minute interval to WordPress cron
-add_filter('cron_schedules', function ($schedules) {
-	if (!isset($schedules['every_five_minutes'])) {
-		$schedules['every_five_minutes'] = [
-			'interval' => 300,
-			'display' => __('Every 5 minutes', 'glamlux-core')
-		];
-	}
-	return $schedules;
-});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Initialize Operational Management (PHASE 2)

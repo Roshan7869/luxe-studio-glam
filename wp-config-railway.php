@@ -28,6 +28,14 @@ $table_prefix = 'wp_';
 define('WP_DEBUG', false);
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Set WP_ENVIRONMENT_TYPE (must be before HTTPS enforcement)
+// ─────────────────────────────────────────────────────────────────────────────
+if (!defined('WP_ENVIRONMENT_TYPE')) {
+    $env = getenv('WP_ENVIRONMENT_TYPE') ?: 'production';
+    define('WP_ENVIRONMENT_TYPE', $env);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // PHASE 0: HTTPS/TLS ENFORCEMENT (SECURITY HARDENING)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -46,10 +54,10 @@ if (defined('WP_ENVIRONMENT_TYPE') && WP_ENVIRONMENT_TYPE === 'production') {
             exit;
         }
     }
-    
+
     // HSTS: Force browsers to always use HTTPS (1 year with subdomains)
     header('Strict-Transport-Security: max-age=31536000; includeSubDomains; preload');
-    
+
     // Force secure cookies in production
     define('FORCE_SSL_ADMIN', true);
     define('FORCE_SSL_LOGIN', true);
@@ -62,13 +70,7 @@ if (!empty($_SERVER['HTTP_HOST'])) {
     define('WP_SITEURL', $proto . $_SERVER['HTTP_HOST']);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Set WP_ENVIRONMENT_TYPE if not already set (Railway integration)
-// ─────────────────────────────────────────────────────────────────────────────
-if (!defined('WP_ENVIRONMENT_TYPE')) {
-    $env = getenv('WP_ENVIRONMENT_TYPE') ?: 'development';
-    define('WP_ENVIRONMENT_TYPE', $env);
-}
+// WP_ENVIRONMENT_TYPE is already set above (before HTTPS enforcement)
 
 // Redis Object Cache — only enable if the drop-in actually exists (prevents crash when Redis is not yet available)
 $redis_host = getenv('REDISHOST') ?: '';
@@ -76,7 +78,7 @@ $redis_dropin = __DIR__ . '/wp-content/object-cache.php';
 if ($redis_host && file_exists($redis_dropin)) {
     define('WP_CACHE', true);
     define('WP_REDIS_HOST', $redis_host);
-    define('WP_REDIS_PORT', (int)(getenv('REDISPORT') ?: 6379));
+    define('WP_REDIS_PORT', (int) (getenv('REDISPORT') ?: 6379));
     $redis_pass = getenv('REDIS_PASSWORD') ?: null;
     if ($redis_pass)
         define('WP_REDIS_PASSWORD', $redis_pass);
@@ -86,8 +88,7 @@ if ($redis_host && file_exists($redis_dropin)) {
     // instead of rejecting writes and crashing the application
     define('WP_REDIS_MAXMEMORY_POLICY', 'allkeys-lru');
     define('WP_REDIS_MAXMEMORY', '256M');
-}
-else {
+} else {
     define('WP_CACHE', false);
 }
 
