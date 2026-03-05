@@ -2,24 +2,9 @@
 // === Luxe Studio Glam - Railway Production wp-config.php ===
 
 // --- TEMP DEBUG LOG DUMP ---
-if (isset($_GET['debug_log'])) {
-    $log_path = dirname(__FILE__) . '/wp-content/debug.log';
-    if (file_exists($log_path)) {
-        header('Content-Type: text/plain');
-        $lines = file($log_path);
-        if ($lines !== false) {
-            $recent_lines = array_slice($lines, -100);
-            foreach ($recent_lines as $line) {
-                echo $line;
-            }
-        } else {
-            echo "Could not read debug.log\n";
-        }
-    } else {
-        echo "debug.log not found at: " . $log_path . "\n";
-    }
-    exit;
-}
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 // --- END TEMP DEBUG LOG DUMP ---
 
 // DB – uses Railway MYSQL* vars if available
