@@ -18,6 +18,20 @@ define('GLAMLUX_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('GLAMLUX_PLUGIN_URL', plugin_dir_url(__FILE__));
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Self-Healing: Remove stale duplicate files left on Railway persistent volume
+// This runs BEFORE any class loading to prevent "Cannot declare class" fatal errors
+// ─────────────────────────────────────────────────────────────────────────────
+$_glamlux_stale_files = array(
+	GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-logger.php',
+);
+foreach ($_glamlux_stale_files as $_stale_file) {
+	if (file_exists($_stale_file)) {
+		@unlink($_stale_file);
+	}
+}
+unset($_glamlux_stale_files, $_stale_file);
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Global Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 

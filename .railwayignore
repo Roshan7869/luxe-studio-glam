@@ -1,0 +1,18 @@
+# Backup archives — never deploy these
+glam_zip_1/
+
+# Git & CI
+.git/
+.github/
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# Node / Dev
+node_modules/
+
+# Docs (not needed in production)
+docs/
+*.md
+!README.md
