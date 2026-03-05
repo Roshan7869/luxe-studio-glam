@@ -1,0 +1,33 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Worktrees
+*.worktrees
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Docs
+docs/
+*.md
+!wp-content/**/*.md
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Dev tools
+.agents
+.gemini
+node_modules
+
+# Scripts not needed in container
+scripts/
+
+# Temporary
+tmp/

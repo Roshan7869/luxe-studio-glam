@@ -1,6 +1,6 @@
-FROM wordpress:apache
+FROM wordpress:php8.3-apache
 
-# Install required PHP extensions
+# Install required PHP extensions + WP-CLI
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
@@ -13,18 +13,22 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install pdo_mysql \
     && rm -rf /var/lib/apt/lists/*
 
-# Fix Apache "Could not reliably determine server's FQDN" warning
+# Install WP-CLI for cron + maintenance
+RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
+    && chmod +x wp-cli.phar \
+    && mv wp-cli.phar /usr/local/bin/wp
+
+# Fix Apache FQDN warning
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
-# Copy custom wp-content (themes + plugins)
-COPY wp-content /var/www/html/wp-content
-COPY composer.json /var/www/html/composer.json
+# Copy entire project (prevents partial deployment drift)
+COPY . /var/www/html
 
-# Install Composer & Dependencies
+# Install Composer dependencies
 COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
 RUN cd /var/www/html && composer install --no-dev --optimize-autoloader || true
 
-# Copy our Railway-optimized wp-config (reads MYSQLHOST / WORDPRESS_DB_* safely)
+# Railway-optimized wp-config overwrites default
 COPY wp-config-railway.php /var/www/html/wp-config.php
 
 # Set correct permissions
@@ -32,7 +36,7 @@ RUN chown -R www-data:www-data /var/www/html/wp-content \
     && chown www-data:www-data /var/www/html/wp-config.php \
     && chmod -R 755 /var/www/html/wp-content
 
-# Copy Railway-specific boot entrypoint (fixes dynamic PORT + Apache MPM)
+# Copy Railway-specific boot entrypoint (dynamic PORT + Apache MPM)
 COPY railway-entrypoint.sh /usr/local/bin/railway-entrypoint.sh
 RUN chmod +x /usr/local/bin/railway-entrypoint.sh
 
