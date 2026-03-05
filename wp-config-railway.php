@@ -1,12 +1,6 @@
 <?php
 // === Luxe Studio Glam - Railway Production wp-config.php ===
 
-// --- TEMP DEBUG LOG DUMP ---
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-// --- END TEMP DEBUG LOG DUMP ---
-
 // DB – uses Railway MYSQL* vars if available
 define('DB_HOST', (getenv('MYSQLHOST') ?: 'mysql.railway.internal') . ':' . (getenv('MYSQLPORT') ?: '3306'));
 define('DB_USER', getenv('MYSQLUSER') ?: 'root');
@@ -33,8 +27,7 @@ define('NONCE_SALT', getenv('NONCE_SALT') ?: 'Py2wF#5jS8nK0qAeZbTxGcMrVuDHiOL4!'
 $table_prefix = 'wp_';
 define('WP_DEBUG', true);
 define('WP_DEBUG_LOG', true);
-define('WP_DEBUG_DISPLAY', true);
-define('WP_DISABLE_FATAL_ERROR_HANDLER', true);
+define('WP_DEBUG_DISPLAY', false);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Set WP_ENVIRONMENT_TYPE (must be before HTTPS enforcement)

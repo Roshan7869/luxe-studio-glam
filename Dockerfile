@@ -26,7 +26,7 @@ COPY . /var/www/html
 
 # Install Composer dependencies
 COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
-RUN cd /var/www/html && composer install --no-dev --optimize-autoloader || true
+RUN cd /var/www/html/wp-content/plugins/glamlux-core && composer install --no-dev --optimize-autoloader || true
 
 # Railway-optimized wp-config overwrites default
 COPY wp-config-railway.php /var/www/html/wp-config.php
