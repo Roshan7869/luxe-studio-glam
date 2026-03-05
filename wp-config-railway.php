@@ -33,7 +33,8 @@ define('NONCE_SALT', getenv('NONCE_SALT') ?: 'Py2wF#5jS8nK0qAeZbTxGcMrVuDHiOL4!'
 $table_prefix = 'wp_';
 define('WP_DEBUG', true);
 define('WP_DEBUG_LOG', true);
-define('WP_DEBUG_DISPLAY', false);
+define('WP_DEBUG_DISPLAY', true);
+define('WP_DISABLE_FATAL_ERROR_HANDLER', true);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Set WP_ENVIRONMENT_TYPE (must be before HTTPS enforcement)
