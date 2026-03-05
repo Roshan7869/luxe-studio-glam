@@ -29,5 +29,13 @@ sed -i "s/<VirtualHost \*:.*>/<VirtualHost *:${PORT}>/" /etc/apache2/sites-avail
 
 echo "==> Apache configured for port $PORT"
 
+# ── Self-Healing: Clean stale duplicate files on persistent volume ──────────
+# Railway's persistent volume retains old files across deployments.
+# Remove known duplicate/deprecated files BEFORE WordPress copies new files.
+echo "==> Cleaning stale plugin files from persistent volume..."
+rm -f /var/www/html/wp-content/plugins/glamlux-core/includes/class-glamlux-logger.php 2>/dev/null || true
+rm -rf /var/www/html/glam_zip_1 2>/dev/null || true
+echo "==> Stale file cleanup complete."
+
 # Now hand off to the official WordPress docker-entrypoint.sh, which sets up wp-config.php
 exec docker-entrypoint.sh "$@"

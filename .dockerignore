@@ -1,33 +1,21 @@
-# Git
-.git
-.gitignore
-.gitattributes
+# Backup archives — never include in Docker build
+glam_zip_1/
 
-# Worktrees
-*.worktrees
+# Git & CI
+.git/
+.github/
 
-# IDE
-.vscode
-.idea
-*.swp
-*.swo
+# IDE / Editor
+.vscode/
+.idea/
 
-# Docs
+# Docs (not needed in production image)
 docs/
 *.md
-!wp-content/**/*.md
+!README.md
 
-# System files
-.DS_Store
-Thumbs.db
+# Node
+node_modules/
 
-# Dev tools
-.agents
-.gemini
-node_modules
-
-# Scripts not needed in container
+# Scripts not needed in image
 scripts/
-
-# Temporary
-tmp/
