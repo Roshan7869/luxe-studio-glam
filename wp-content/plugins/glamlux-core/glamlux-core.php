@@ -205,8 +205,6 @@ if (!wp_next_scheduled('glamlux_cleanup_device_tokens')) {
 // Initialize Operational Management (PHASE 2)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Logging system
-require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-logger.php';
 
 // Performance monitoring
 require_once GLAMLUX_PLUGIN_DIR . 'includes/class-glamlux-performance.php';
