@@ -15,8 +15,7 @@ class GlamLux_Service_Lead
 	public function __construct(
 		GlamLux_Event_Dispatcher $dispatcher = null,
 		GlamLux_Repo_Lead $repo = null
-		)
-	{
+	) {
 		$this->repo = $repo ?: new GlamLux_Repo_Lead();
 		$this->dispatcher = $dispatcher;
 	}
@@ -40,7 +39,7 @@ class GlamLux_Service_Lead
 		$rows = $this->repo->get_funnel_summary();
 		$funnel = ['new' => 0, 'contacted' => 0, 'qualified' => 0, 'proposal_sent' => 0, 'converted' => 0, 'lost' => 0];
 		foreach ($rows as $r) {
-			$funnel[$r['status']] = (int)$r['count'];
+			$funnel[$r['status']] = (int) $r['count'];
 		}
 		return $funnel;
 	}
@@ -128,7 +127,7 @@ class GlamLux_Service_Lead
 		// Prevents audit trail corruption if secondary insert fails
 		global $wpdb;
 		$wpdb->query('START TRANSACTION');
-		
+
 		try {
 			$updated = $this->repo->update_lead_status($id, $status);
 			if (!$updated) {
@@ -146,7 +145,7 @@ class GlamLux_Service_Lead
 					'due_at' => current_time('mysql'),
 					'completed_at' => current_time('mysql'),
 				]);
-				
+
 				if (!$inserted) {
 					$wpdb->query('ROLLBACK');
 					return new WP_Error('audit_trail_failed', 'Failed to log status change.', ['status' => 500]);
@@ -154,7 +153,7 @@ class GlamLux_Service_Lead
 			}
 
 			$wpdb->query('COMMIT');
-			
+
 			// Fire conversion event for downstream listeners (notify, analytics)
 			if ($status === 'converted') {
 				do_action('glamlux_lead_converted', $id);
@@ -162,15 +161,12 @@ class GlamLux_Service_Lead
 					$this->dispatcher->dispatch('lead_converted', ['lead_id' => $id]);
 				}
 			}
-			
+
 			return true;
 		} catch (Exception $e) {
 			$wpdb->query('ROLLBACK');
 			return new WP_Error('transaction_failed', $e->getMessage(), ['status' => 500]);
 		}
-	}
-
-		return true;
 	}
 
 	public function assign(int $id, int $user_id): bool|WP_Error
@@ -185,7 +181,7 @@ class GlamLux_Service_Lead
 
 	public function schedule_followup(int $lead_id, string $type, string $due = '+1 day'): bool
 	{
-		return (bool)$this->repo->insert_followup([
+		return (bool) $this->repo->insert_followup([
 			'lead_id' => $lead_id,
 			'type' => sanitize_text_field($type),
 			'due_at' => date('Y-m-d H:i:s', strtotime($due)),
