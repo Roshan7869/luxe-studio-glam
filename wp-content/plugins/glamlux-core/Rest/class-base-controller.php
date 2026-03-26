@@ -11,20 +11,61 @@ class GlamLux_Base_Controller {
 	}
 	public function require_client_role() {
 		if (!is_user_logged_in()) return new WP_Error('glamlux_unauthorized', 'Authentication required.', ['status'=>401]);
-		$allowed = ['glamlux_client', 'glamlux_staff', 'glamlux_franchise_admin', 'glamlux_super_admin', 'administrator'];
+		$allowed = ['glamlux_client', 'glamlux_staff', 'glamlux_franchise_employee', 'glamlux_franchise_manager', 'glamlux_franchise_admin', 'glamlux_chairperson', 'glamlux_super_admin', 'administrator'];
 		$user = wp_get_current_user();
 		foreach ($allowed as $role) { if (in_array($role, (array)$user->roles, true)) return true; }
 		return new WP_Error('glamlux_forbidden', 'Permission denied.', ['status'=>403]);
 	}
 	public function require_staff_or_admin() {
 		if (!is_user_logged_in()) return new WP_Error('glamlux_unauthorized', 'Authentication required.', ['status'=>401]);
-		if (current_user_can('glamlux_manage_appointments') || current_user_can('manage_options')) return true;
+		if (current_user_can('glamlux_manage_appointments') || current_user_can('manage_glamlux_appointments') || current_user_can('manage_options')) return true;
 		return new WP_Error('glamlux_forbidden', 'Insufficient permissions.', ['status'=>403]);
 	}
 	public function require_franchise_admin() {
-		return current_user_can('manage_options') || current_user_can('glamlux_state_manager') || current_user_can('glamlux_franchise_admin');
+		return current_user_can('manage_options') || current_user_can('glamlux_state_manager') || current_user_can('glamlux_franchise_admin') || current_user_can('manage_glamlux_franchise');
 	}
 	public function require_salon_manager() {
-		return current_user_can('manage_options') || current_user_can('glamlux_state_manager') || current_user_can('glamlux_franchise_admin') || current_user_can('glamlux_salon_manager');
+		return current_user_can('manage_options') || current_user_can('glamlux_state_manager') || current_user_can('glamlux_franchise_admin') || current_user_can('glamlux_salon_manager') || current_user_can('manage_glamlux_franchise');
+	}
+	/**
+	 * Require Chairperson or above.
+	 * Chairpersons oversee multiple franchises and manage franchise managers.
+	 */
+	public function require_chairperson() {
+		if (!is_user_logged_in()) return new WP_Error('glamlux_unauthorized', 'Authentication required.', ['status'=>401]);
+		if (
+			current_user_can('manage_options') ||
+			current_user_can('manage_glamlux_platform') ||
+			current_user_can('glamlux_state_manager') ||
+			current_user_can('manage_glamlux_franchise_managers')
+		) return true;
+		return new WP_Error('glamlux_forbidden', 'Chairperson access required.', ['status'=>403]);
+	}
+	/**
+	 * Require Franchise Manager or above.
+	 * Franchise managers can manage employees within their franchise.
+	 */
+	public function require_franchise_manager() {
+		if (!is_user_logged_in()) return new WP_Error('glamlux_unauthorized', 'Authentication required.', ['status'=>401]);
+		if (
+			current_user_can('manage_options') ||
+			current_user_can('manage_glamlux_platform') ||
+			current_user_can('manage_glamlux_franchise') ||
+			current_user_can('manage_glamlux_franchise_managers') ||
+			current_user_can('manage_glamlux_franchise_employees')
+		) return true;
+		return new WP_Error('glamlux_forbidden', 'Franchise Manager access required.', ['status'=>403]);
+	}
+	/**
+	 * Require Franchise Employee or above (any authenticated franchise participant).
+	 */
+	public function require_franchise_employee_or_above() {
+		if (!is_user_logged_in()) return new WP_Error('glamlux_unauthorized', 'Authentication required.', ['status'=>401]);
+		if (
+			current_user_can('manage_glamlux_appointments') ||
+			current_user_can('glamlux_check_attendance') ||
+			current_user_can('manage_options')
+		) return true;
+		return new WP_Error('glamlux_forbidden', 'Franchise employee access required.', ['status'=>403]);
 	}
 }
