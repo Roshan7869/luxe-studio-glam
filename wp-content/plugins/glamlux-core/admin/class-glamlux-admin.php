@@ -69,6 +69,38 @@ class GlamLux_Admin
 		add_submenu_page('glamlux-salon', 'Attendance', '⏰ Attendance', 'manage_glamlux_franchise', 'glamlux-my-attendance', array($this, 'display_attendance'));
 		add_submenu_page('glamlux-salon', 'Shift Schedule', '📅 Shifts', 'manage_glamlux_franchise', 'glamlux-my-shifts', array($this, 'display_shifts'));
 
+		// ─── Chairperson Menu ────────────────────────────────────────────────────
+		add_menu_page(
+			__('Chairperson Dashboard', 'glamlux-core'),
+			__('My Franchises', 'glamlux-core'),
+			'manage_glamlux_franchise_managers',
+			'glamlux-chairperson',
+			array($this, 'display_chairperson_dashboard'),
+			'dashicons-groups',
+			4
+		);
+		add_submenu_page('glamlux-chairperson', __('User Management', 'glamlux-core'), __('👥 Users', 'glamlux-core'), 'manage_glamlux_franchise_managers', 'glamlux-user-management', array($this, 'display_user_management'));
+		add_submenu_page('glamlux-chairperson', __('Franchise Managers', 'glamlux-core'), __('Franchise Managers', 'glamlux-core'), 'manage_glamlux_franchise_managers', 'glamlux-my-franchise-managers', array($this, 'display_franchise_managers'));
+		add_submenu_page('glamlux-chairperson', __('Reporting', 'glamlux-core'), __('Reports', 'glamlux-core'), 'view_franchise_reports', 'glamlux-chairperson-reports', array($this, 'display_reporting'));
+
+		// ─── Franchise Manager Menu ──────────────────────────────────────────────
+		add_menu_page(
+			__('Franchise Manager', 'glamlux-core'),
+			__('My Franchise', 'glamlux-core'),
+			'manage_glamlux_franchise_employees',
+			'glamlux-franchise-manager',
+			array($this, 'display_franchise_manager_dashboard'),
+			'dashicons-building',
+			5
+		);
+		add_submenu_page('glamlux-franchise-manager', __('Employees', 'glamlux-core'), __('👷 Employees', 'glamlux-core'), 'manage_glamlux_franchise_employees', 'glamlux-user-management', array($this, 'display_user_management'));
+		add_submenu_page('glamlux-franchise-manager', __('Appointments', 'glamlux-core'), __('Appointments', 'glamlux-core'), 'manage_glamlux_appointments', 'glamlux-fm-appointments', array($this, 'display_appointments'));
+		add_submenu_page('glamlux-franchise-manager', __('Attendance', 'glamlux-core'), __('⏰ Attendance', 'glamlux-core'), 'manage_glamlux_appointments', 'glamlux-fm-attendance', array($this, 'display_attendance'));
+		add_submenu_page('glamlux-franchise-manager', __('Inventory', 'glamlux-core'), __('Inventory', 'glamlux-core'), 'manage_glamlux_inventory', 'glamlux-fm-inventory', array($this, 'display_inventory'));
+
+		// User Management: also accessible from super-admin dashboard
+		add_submenu_page('glamlux-dashboard', __('User Management', 'glamlux-core'), __('👥 Users', 'glamlux-core'), 'manage_glamlux_platform', 'glamlux-user-management', array($this, 'display_user_management'));
+
 		// ─── Staff Menu ─────────────────────────────────────────────────────────
 		add_menu_page(
 			'Appointments',
@@ -77,7 +109,7 @@ class GlamLux_Admin
 			'glamlux-appointments',
 			array($this, 'display_appointments'),
 			'dashicons-calendar-alt',
-			5
+			6
 		);
 	}
 
@@ -271,6 +303,103 @@ class GlamLux_Admin
 	{
 		$territory = new GlamLux_Territory_Admin();
 		$territory->render_admin_page();
+	}
+
+	public function display_user_management()
+	{
+		$mgr = new GlamLux_User_Management();
+		$mgr->render_admin_page();
+	}
+
+	public function display_chairperson_dashboard()
+	{
+		$user = wp_get_current_user();
+		echo '<div class="wrap">';
+		echo '<h1>' . esc_html__('Chairperson Dashboard', 'glamlux-core') . '</h1>';
+		echo '<p>' . sprintf(
+			/* translators: %s: user display name */
+			esc_html__('Welcome, %s. Use the sidebar to manage your franchise managers and employees.', 'glamlux-core'),
+			esc_html($user->display_name)
+		) . '</p>';
+
+		$franchise_id = (int) get_user_meta($user->ID, 'glamlux_managed_franchise_id', true);
+		if ($franchise_id) {
+			global $wpdb;
+			$franchise = $wpdb->get_row($wpdb->prepare(
+				"SELECT name FROM {$wpdb->prefix}gl_franchises WHERE id = %d",
+				$franchise_id
+			));
+			if ($franchise) {
+				echo '<p><strong>' . esc_html__('Your Franchise:', 'glamlux-core') . '</strong> ' . esc_html($franchise->name) . '</p>';
+			}
+		}
+
+		// Quick stats
+		$manager_count  = count(get_users(['role' => 'glamlux_franchise_manager', 'meta_key' => 'glamlux_managed_franchise_id', 'meta_value' => $franchise_id, 'count_total' => false]));
+		$employee_count = count(get_users(['role' => 'glamlux_franchise_employee', 'meta_key' => 'glamlux_managed_franchise_id', 'meta_value' => $franchise_id, 'count_total' => false]));
+
+		echo '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:20px 0;max-width:600px;">';
+		foreach ([
+			[__('Franchise Managers', 'glamlux-core'), $manager_count, '#1565C0'],
+			[__('Franchise Employees', 'glamlux-core'), $employee_count, '#00897B'],
+		] as [$label, $value, $color]) {
+			printf(
+				'<div style="background:#fff;border-left:4px solid %s;padding:16px 20px;box-shadow:0 1px 3px rgba(0,0,0,.08);border-radius:4px;"><div style="font-size:24px;font-weight:700;color:%s;">%s</div><div style="color:#555;font-size:13px;margin-top:4px;">%s</div></div>',
+				esc_attr($color), esc_attr($color), esc_html((string)$value), esc_html($label)
+			);
+		}
+		echo '</div>';
+
+		echo '<p><a href="' . esc_url(admin_url('admin.php?page=glamlux-user-management')) . '" class="button button-primary">' . esc_html__('Manage Users →', 'glamlux-core') . '</a></p>';
+		echo '</div>';
+	}
+
+	public function display_franchise_managers()
+	{
+		// Reuse the User Management page filtered to franchise managers
+		$_GET['role'] = 'glamlux_franchise_manager';
+		$mgr = new GlamLux_User_Management();
+		$mgr->render_admin_page();
+	}
+
+	public function display_franchise_manager_dashboard()
+	{
+		$user = wp_get_current_user();
+		echo '<div class="wrap">';
+		echo '<h1>' . esc_html__('Franchise Manager Dashboard', 'glamlux-core') . '</h1>';
+		echo '<p>' . sprintf(
+			/* translators: %s: user display name */
+			esc_html__('Welcome, %s. Use the sidebar to manage your employees and operations.', 'glamlux-core'),
+			esc_html($user->display_name)
+		) . '</p>';
+
+		$franchise_id = (int) get_user_meta($user->ID, 'glamlux_managed_franchise_id', true);
+		if ($franchise_id) {
+			global $wpdb;
+			$franchise = $wpdb->get_row($wpdb->prepare(
+				"SELECT name FROM {$wpdb->prefix}gl_franchises WHERE id = %d",
+				$franchise_id
+			));
+			if ($franchise) {
+				echo '<p><strong>' . esc_html__('Your Franchise:', 'glamlux-core') . '</strong> ' . esc_html($franchise->name) . '</p>';
+			}
+		}
+
+		$employee_count = count(get_users([
+			'role__in' => ['glamlux_franchise_employee', 'glamlux_staff'],
+			'meta_key'  => 'glamlux_managed_franchise_id',
+			'meta_value' => $franchise_id,
+		]));
+
+		echo '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:20px 0;max-width:400px;">';
+		printf(
+			'<div style="background:#fff;border-left:4px solid #00897B;padding:16px 20px;box-shadow:0 1px 3px rgba(0,0,0,.08);border-radius:4px;"><div style="font-size:24px;font-weight:700;color:#00897B;">%s</div><div style="color:#555;font-size:13px;margin-top:4px;">%s</div></div>',
+			esc_html((string)$employee_count), esc_html__('Employees', 'glamlux-core')
+		);
+		echo '</div>';
+
+		echo '<p><a href="' . esc_url(admin_url('admin.php?page=glamlux-user-management')) . '" class="button button-primary">' . esc_html__('Manage Employees →', 'glamlux-core') . '</a></p>';
+		echo '</div>';
 	}
 
 	/**

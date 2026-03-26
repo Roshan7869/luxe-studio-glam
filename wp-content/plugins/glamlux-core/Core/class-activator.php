@@ -485,6 +485,73 @@ class GlamLux_Activator
 			$staff->add_cap('manage_glamlux_appointments');
 			$staff->add_cap('glamlux_check_attendance'); // Phase 1.1: allow clock-in/out
 		}
+
+		// ── Chairperson: Oversees multiple franchises ─────────────────────
+		$chairperson = get_role('glamlux_chairperson');
+		if ($chairperson) {
+			$chairperson_caps = [
+				'read' => true,
+				'upload_files' => true,
+				'edit_posts' => true,
+				'publish_posts' => true,
+				'manage_categories' => true,
+				// GlamLux custom
+				'manage_glamlux_franchise' => true,
+				'view_franchise_reports' => true,
+				'manage_glamlux_franchise_managers' => true,
+				'manage_glamlux_franchise_employees' => true,
+				'manage_glamlux_appointments' => true,
+				'manage_glamlux_inventory' => true,
+				'glamlux_check_attendance' => true,
+				'view_state_reports' => false,
+				'manage_glamlux_platform' => false,
+			];
+			foreach ($chairperson_caps as $cap => $grant) {
+				if ($grant) {
+					$chairperson->add_cap($cap);
+				} else {
+					$chairperson->remove_cap($cap);
+				}
+			}
+		}
+
+		// ── Franchise Manager: Day-to-day franchise operations ────────────
+		$franchise_manager = get_role('glamlux_franchise_manager');
+		if ($franchise_manager) {
+			$franchise_manager_caps = [
+				'read' => true,
+				'upload_files' => true,
+				'edit_posts' => true,
+				// GlamLux custom
+				'manage_glamlux_franchise_employees' => true,
+				'manage_glamlux_appointments' => true,
+				'view_franchise_reports' => true,
+				'manage_glamlux_inventory' => true,
+				'glamlux_check_attendance' => true,
+				'manage_glamlux_franchise' => false,
+				'manage_glamlux_franchise_managers' => false,
+				'manage_glamlux_platform' => false,
+			];
+			foreach ($franchise_manager_caps as $cap => $grant) {
+				if ($grant) {
+					$franchise_manager->add_cap($cap);
+				} else {
+					$franchise_manager->remove_cap($cap);
+				}
+			}
+		}
+
+		// ── Franchise Employee: Basic employee within a franchise ─────────
+		$franchise_employee = get_role('glamlux_franchise_employee');
+		if ($franchise_employee) {
+			$franchise_employee->add_cap('read');
+			$franchise_employee->add_cap('manage_glamlux_appointments');
+			$franchise_employee->add_cap('glamlux_check_attendance');
+			$franchise_employee->remove_cap('manage_glamlux_franchise_employees');
+			$franchise_employee->remove_cap('manage_glamlux_franchise_managers');
+			$franchise_employee->remove_cap('manage_glamlux_franchise');
+			$franchise_employee->remove_cap('manage_glamlux_platform');
+		}
 	}
 
 	/**
@@ -887,6 +954,50 @@ class GlamLux_Activator
 				'view_salon_reports' => true,
 				'manage_glamlux_appointments' => true,
 				'manage_glamlux_inventory' => true,
+			)
+			);
+		}
+
+		// ── Chairperson: Oversees multiple franchises, manages franchise managers ──
+		if (!get_role('glamlux_chairperson')) {
+			add_role(
+				'glamlux_chairperson',
+				__('Chairperson', 'glamlux-core'),
+				array(
+				'read' => true,
+				'manage_glamlux_franchise' => true,
+				'view_franchise_reports' => true,
+				'manage_glamlux_franchise_managers' => true,
+				'manage_glamlux_franchise_employees' => true,
+			)
+			);
+		}
+
+		// ── Franchise Manager: Day-to-day operations of a single franchise ──────
+		if (!get_role('glamlux_franchise_manager')) {
+			add_role(
+				'glamlux_franchise_manager',
+				__('Franchise Manager', 'glamlux-core'),
+				array(
+				'read' => true,
+				'manage_glamlux_franchise_employees' => true,
+				'manage_glamlux_appointments' => true,
+				'view_franchise_reports' => true,
+				'manage_glamlux_inventory' => true,
+				'glamlux_check_attendance' => true,
+			)
+			);
+		}
+
+		// ── Franchise Employee: Basic staff within a franchise ───────────────────
+		if (!get_role('glamlux_franchise_employee')) {
+			add_role(
+				'glamlux_franchise_employee',
+				__('Franchise Employee', 'glamlux-core'),
+				array(
+				'read' => true,
+				'manage_glamlux_appointments' => true,
+				'glamlux_check_attendance' => true,
 			)
 			);
 		}

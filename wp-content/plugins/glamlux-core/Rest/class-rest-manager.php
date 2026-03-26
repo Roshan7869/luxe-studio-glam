@@ -82,6 +82,10 @@ class GlamLux_REST_Manager
 		if (class_exists('GlamLux_Payroll_Controller')) {
 			(new GlamLux_Payroll_Controller())->register_routes();
 		}
+
+		// User Management Domain (Chairperson / Franchise Manager / Employee)
+		require_once GLAMLUX_PLUGIN_DIR . 'Rest/class-user-management-controller.php';
+		(new GlamLux_User_Management_Controller())->register_routes();
 	}
 	public function check_rate_limit($result, $server, $request)
 	{

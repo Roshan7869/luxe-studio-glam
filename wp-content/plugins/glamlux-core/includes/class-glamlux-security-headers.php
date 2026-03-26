@@ -117,14 +117,13 @@ class GlamLux_Security_Headers {
         // Combine directives
         $csp = implode('; ', $csp_directives);
         
-        // Set CSP header (use report-only for testing, enforcement for production)
+        // Set CSP header (report-only for testing, enforcement for production)
         // Report-only mode: violations reported but not enforced
         header('Content-Security-Policy-Report-Only: ' . $csp);
         
-        // In production, also set enforcement header
+        // In production, also enforce the CSP header
         if (defined('WP_ENVIRONMENT_TYPE') && WP_ENVIRONMENT_TYPE === 'production') {
-            // After testing, switch to enforcement mode:
-            // header('Content-Security-Policy: ' . $csp);
+            header('Content-Security-Policy: ' . $csp);
         }
     }
     

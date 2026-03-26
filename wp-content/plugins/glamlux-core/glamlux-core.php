@@ -386,6 +386,7 @@ function run_glamlux_core()
 	require_once GLAMLUX_PLUGIN_DIR . 'admin/modules/class-glamlux-shifts-admin.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'admin/modules/class-glamlux-platform-settings.php';
 	require_once GLAMLUX_PLUGIN_DIR . 'admin/modules/class-glamlux-territory-admin.php';
+	require_once GLAMLUX_PLUGIN_DIR . 'admin/modules/class-glamlux-user-management.php';
 
 	// ── STEP 8: Instantiate Services (global DI references) ──────────────────
 
@@ -438,6 +439,7 @@ function run_glamlux_core()
 	new GlamLux_Memberships(); // Sprint 3: register membership CRUD handlers
 	new GlamLux_Platform_Settings(); // Sprint 5: platform settings page
 	new GlamLux_Territory_Admin(); // Sprint 6: territory management
+	new GlamLux_User_Management(); // Phase 3.2: Chairperson/FranchiseManager/Employee CRUD
 }
 add_action('plugins_loaded', 'run_glamlux_core', 20);
 
